@@ -5,11 +5,11 @@ project(Lox_Interpreter LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(Lox_Interpreter main.cpp
-    tokentype.hpp
-    token.hpp token.cpp
-    scanner.hpp scanner.cpp
-    lox.hpp lox.cpp
+add_executable(Lox_Interpreter src/main.cpp
+    include/tokentype.hpp
+    include/token.hpp src/token.cpp
+    include/scanner.hpp src/scanner.cpp
+    include/lox.hpp src/lox.cpp
 )
 
 include(GNUInstallDirs)
