@@ -3,10 +3,10 @@
 
 #include <string>
 #include <cstdio>
-#include <optional>
+#include <ostream>
 
 #include "tokentype.hpp"
-
+#include "object.hpp"
 
 
 class Token
@@ -14,13 +14,24 @@ class Token
 
     TokenType type;
     std::string lexeme;
-    std::optional<std::string> literal;
+    Object literal;
     int line;
 
 
 public:
-    Token(TokenType _type, std::string_view _lexeme, std::optional<std::string> _literal, const int& _line);
-    void print() const;
+
+    Token() = default;
+    Token(TokenType _type, std::string_view _lexeme, Object _literal, const int& _line);
+
+    std::string get_lexeme(){
+        return lexeme;
+    }
+
+    const Object& get_value(){
+        return literal;
+    }
+
+    friend std::ostream& operator<< (std::ostream& os, const Token& tok);
 };
 
 #endif // TOKEN_HPP

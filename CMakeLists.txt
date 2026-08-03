@@ -10,7 +10,13 @@ add_executable(Lox_Interpreter src/main.cpp
     include/token.hpp src/token.cpp
     include/scanner.hpp src/scanner.cpp
     include/lox.hpp src/lox.cpp
+    include/visitor.hpp include/RPNConverter.hpp include/object.hpp include/expr.hpp include/astprinter.hpp
+
 )
+
+
+include_directories(BEFORE "include/")
+
 
 include(GNUInstallDirs)
 install(TARGETS Lox_Interpreter

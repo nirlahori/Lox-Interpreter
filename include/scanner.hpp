@@ -1,13 +1,14 @@
 #ifndef SCANNER_HPP
 #define SCANNER_HPP
 
+
+#include "token.hpp"
+#include "object.hpp"
+
 #include <string>
 #include <string_view>
 #include <list>
 #include <map>
-#include <optional>
-
-#include "token.hpp"
 
 class Scanner
 {
@@ -25,13 +26,14 @@ class Scanner
     void scan_token();
     char advance();
     void add_token(TokenType type);
-    void add_token(TokenType type, std::optional<std::string> lit);
+    void add_token(TokenType type, Object lit);
     bool match(char current_ch);
     char peek() const;
     char peek_next() const;
     void expect_string();
     void expect_number();
     void expect_identifier();
+    void expect_comment();
 
 public:
     Scanner() = default;
