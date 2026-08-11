@@ -5,21 +5,27 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <iterator>
 
 #include "visitor.hpp"
 #include "expr.hpp"
 
 
-class AstPrinter : Visitor<std::string>
+class AstPrinter : Visitor<Object>
 {
-    std::string parenthesize(std::string name, const std::vector<Expr<std::string>*>& exprs){
+
+    Object parenthesize(std::string name, const std::vector<std::unique_ptr<Expr<Object>>>& exprs){
 
         std::ostringstream str;
         str << "(" << name;
-        for(Expr<std::string>* expr : exprs){
+
+        std::vector<std::unique_ptr<Expr<Object>>>::const_iterator first = exprs.cbegin();
+        while(first != exprs.cend()){
             str << " ";
-            str << expr->accept(this);
+            str << (*first)->accept(this);
+            first = std::next(first);
         }
+
         str << ")";
         return str.str();
     }
@@ -29,28 +35,32 @@ public:
     AstPrinter() = default;
 
     template<typename T>
-    std::string print(Expr<T>* expr){
+    Object print(Expr<T>* expr){
         return expr->accept(this);
     }
 
-    std::string visit(Binary<std::string>* bin){
-        std::vector<Expr<std::string>*> vec{bin->left, bin->right};
+    Object visit(Binary<Object>* bin){
+        std::vector<std::unique_ptr<Expr<Object>>> vec;
+        vec.push_back(std::move(bin->left));
+        vec.push_back(std::move(bin->right));
         return parenthesize(bin->opr.get_lexeme(), vec);
     }
 
-    std::string visit(Unary<std::string>* un){
-        std::vector<Expr<std::string>*> vec{un->right};
+    Object visit(Unary<Object>* un){
+        std::vector<std::unique_ptr<Expr<Object>>> vec;
+        vec.push_back(std::move(un->right));
         return parenthesize(un->opr.get_lexeme(), vec);
     }
 
-    std::string visit(Grouping<std::string>* grp){
-        std::vector<Expr<std::string>*> vec{grp->expression};
+    Object visit(Grouping<Object>* grp){
+        std::vector<std::unique_ptr<Expr<Object>>> vec;
+        vec.push_back(std::move(grp->expression));
         return parenthesize("group", vec);
     }
 
-    std::string visit(Literal<std::string>* lit){
-        if(lit->value == nullptr){
-            return "nil";
+    Object visit(Literal<Object>* lit){
+        if(!lit->value){
+            return nullptr;
         }
         return lit->value;
     }

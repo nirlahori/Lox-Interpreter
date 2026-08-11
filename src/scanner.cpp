@@ -172,7 +172,7 @@ void Scanner::expect_number()
     }
 
     double d{std::stod(source.substr(start, current - start))};
-    add_token(TokenType::NUMBER, std::to_string(d));
+    add_token(TokenType::NUMBER, d);
 }
 
 void Scanner::expect_identifier()

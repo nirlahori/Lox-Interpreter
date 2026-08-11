@@ -1,5 +1,9 @@
 #include "lox.hpp"
 #include "scanner.hpp"
+#include "parser.hpp"
+#include "expr.hpp"
+#include "object.hpp"
+#include "astprinter.hpp"
 
 #include <exception>
 #include <iostream>
@@ -18,13 +22,29 @@ void Lox::error(int line, std::string_view msg)
     report(line, "", msg);
 }
 
+void Lox::error(Token token, std::string msg)
+{
+    if(token.get_type() == TokenType::END_OF_FILE){
+        report(token.get_line(), "at end", msg);
+    }
+    else{
+        report(token.get_line(), "at '" + token.get_lexeme() + "'", msg);
+    }
+}
+
 void Lox::run(std::string source)
 {
     Scanner scn(source);
     std::list<Token> tokens {scn.scan_tokens()};
-    for(const Token& tok : tokens){
-        std::cout << tok << std::endl;
+
+    Parser parser(tokens);
+    std::unique_ptr<Expr<Object>> expr = parser.parse();
+
+    if(had_error){
+        return;
     }
+
+    std::cout << AstPrinter().print(expr.get()) << std::endl;
 }
 
 void Lox::run_file(std::string_view path)

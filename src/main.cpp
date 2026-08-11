@@ -6,29 +6,7 @@
 #include "lox.hpp"
 #include "RPNConverter.hpp"
 
-
-
-void print_ast(){
-    // ASTPrinter Visitor
-
-    Literal<std::string> lit (123);
-    Unary<std::string> un(
-        Token(TokenType::MINUS, "-", nullptr, 1),
-        &lit
-        );
-
-    Token bintok (TokenType::STAR, "*", nullptr, 1);
-
-    Literal<std::string> glit (45.67);
-    Grouping<std::string> grp(&glit);
-
-    Binary<std::string> bin(&un, bintok, &grp);
-
-    Expr<std::string>* expr (&bin);
-
-    std::cout << AstPrinter().print(expr) << std::endl;
-}
-
+/*
 void print_rpn(){
 
     // RPN (Reverse-Polish Notation converter Visitor)
@@ -52,6 +30,7 @@ void print_rpn(){
 
     std::cout << RPNConverter().print(&bin_expr) << std::endl;
 }
+*/
 
 int main(int argc, char *argv[])
 {

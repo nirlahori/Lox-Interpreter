@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <ostream>
 
 class Object{
 
@@ -54,6 +55,7 @@ public:
     Object(const T& _val) :
         obj_ptr{std::make_unique<ObjectImpl<T>>(_val)}
         {}
+
     Object(std::nullptr_t _ptr) :
         obj_ptr{nullptr}
         {}
@@ -91,6 +93,15 @@ public:
         return obj_ptr.get();
     }
 
+    friend std::ostream& operator<< (std::ostream& os, Object obj){
+        if(obj.obj_ptr){
+            os << obj.obj_ptr->to_str();
+        }
+        else{
+            os << nullptr;
+        }
+        return os;
+    }
 };
 
 #endif // OBJECT_HPP

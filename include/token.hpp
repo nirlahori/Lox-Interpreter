@@ -23,13 +23,10 @@ public:
     Token() = default;
     Token(TokenType _type, std::string_view _lexeme, Object _literal, const int& _line);
 
-    std::string get_lexeme(){
-        return lexeme;
-    }
-
-    const Object& get_value(){
-        return literal;
-    }
+    std::string get_lexeme();
+    const Object& get_value();
+    TokenType get_type();
+    int get_line();
 
     friend std::ostream& operator<< (std::ostream& os, const Token& tok);
 };

@@ -13,3 +13,20 @@ std::ostream& operator<< (std::ostream& os, const Token& tok){
     os << "Token: {Lexeme: " << tok.lexeme << ", Line: " << tok.line << ", Value: " << (tok.literal ? std::string(tok.literal).c_str() : "-") << "}";
     return os;
 }
+
+std::string Token::get_lexeme(){
+    return lexeme;
+}
+
+const Object& Token::get_value(){
+    return literal;
+}
+
+TokenType Token::get_type(){
+    return type;
+}
+
+int Token::get_line()
+{
+    return line;
+}
