@@ -33,7 +33,6 @@ class Scanner
     void expect_string();
     void expect_number();
     void expect_identifier();
-    void expect_comment();
 
 public:
     Scanner() = default;

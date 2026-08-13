@@ -63,9 +63,7 @@ void Scanner::scan_token()
                 advance();
             }
         }
-	else if (match('*')) {
-                expect_comment();
-        }else {
+        else {
             add_token(TokenType::SLASH);
         }
         break;
@@ -192,32 +190,6 @@ void Scanner::expect_identifier()
         add_token(keywords.at(str));
     } else {
         add_token(TokenType::IDENTIFIER);
-    }
-}
-
-void Scanner::expect_comment(){
-
-    std::stack<std::string> nest_level({"/*"});
-
-    char ch;
-    while(!nest_level.empty() && !is_at_end()){
-        ch = peek();
-        if(ch == '*' && peek_next() == '/'){
-            nest_level.pop();
-            advance(); // Consume *
-        }
-        if(ch == '/' && peek_next() == '*'){
-            nest_level.push({"/*"});
-            advance(); // Consume /
-        }
-        else if(ch == '\n'){
-            line++;
-        }
-        advance(); // Consume either * or / depending on above if condition
-    }
-
-    if(is_at_end() && !nest_level.empty()){
-        Lox::error(line, "Unterminated block comment\n");
     }
 }
 
