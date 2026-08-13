@@ -7,16 +7,6 @@
 Parser::Parser() = default;
 
 
-
-std::unique_ptr<Expr<Object>> Parser::comma()
-{
-    std::unique_ptr<Expr<Object>> expr;
-    while(match({TokenType::COMMA})){
-        expr = expression();
-    }
-    return expr;
-}
-
 std::unique_ptr<Expr<Object>> Parser::expression()
 {
     return equality();
@@ -94,9 +84,6 @@ std::unique_ptr<Expr<Object>> Parser::primary()
 
     if(match({TokenType::LEFT_PAREN})){
         std::unique_ptr<Expr<Object>> expr {expression()};
-        if(peek().get_type() == TokenType::COMMA){
-            expr = comma();
-        }
         consume(TokenType::RIGHT_PAREN, "Expect ')' after expression");
         return std::make_unique<Grouping<Object>>(std::move(expr));
     }
