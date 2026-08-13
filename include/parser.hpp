@@ -20,7 +20,6 @@ class Parser
     std::list<Token>::iterator current;
 
 
-    std::unique_ptr<Expr<Object>> comma();
     std::unique_ptr<Expr<Object>> expression();
     std::unique_ptr<Expr<Object>> equality();
     std::unique_ptr<Expr<Object>> comparison();
