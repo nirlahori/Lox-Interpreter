@@ -112,6 +112,7 @@ public:
         return obj_ptr.get();
     }
 
+
     friend std::ostream& operator<< (std::ostream& os, Object obj){
         if(obj.obj_ptr){
             os << obj.obj_ptr->to_str();
@@ -126,8 +127,21 @@ public:
         return obj_ptr->underlying_type();
     }
 
+    friend bool operator== (const Object& lhs, const Object& rhs){
+        if(lhs.underlying_type() == "double" && rhs.underlying_type() == "double"){
+            return std::stod(lhs) == std::stod(rhs);
+        }
+        else if(lhs.underlying_type() == "string" && rhs.underlying_type() == "string"){
+            return static_cast<std::string>(lhs) == static_cast<std::string>(rhs);
+        }
+        else if(lhs.underlying_type() == "bool" && rhs.underlying_type() == "bool"){
+            return static_cast<bool>(lhs) == static_cast<bool>(rhs);
+        }
+        else{
+            return false;
+        }
+    }
 };
-
 
 
 #endif // OBJECT_HPP
