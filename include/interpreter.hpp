@@ -16,6 +16,9 @@ class Interpreter : public Visitor<Object>
     void check_number_operand(Token opr, const Object& operand);
     void check_number_operand(Token opr, const Object& left, const Object& right);
     std::string stringify(Object obj);
+
+    void check_division_by_zero(Token opr, const Object& value);
+
 public:
     Interpreter();
 

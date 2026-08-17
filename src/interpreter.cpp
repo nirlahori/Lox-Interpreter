@@ -77,6 +77,13 @@ std::string Interpreter::stringify(Object obj)
     return obj;
 }
 
+void Interpreter::check_division_by_zero(Token opr, const Object& value)
+{
+    if(std::stod(value) == 0){
+        throw RuntimeError(opr, "Attempt to divide value by zero");
+    }
+}
+
 Object Interpreter::visit(Binary<Object>* bin)
 {
     Object left {evaluate(bin->left.get())};
@@ -100,6 +107,7 @@ Object Interpreter::visit(Binary<Object>* bin)
             return std::stod(left) - std::stod(right);
         case TokenType::SLASH:
             check_number_operand(bin->opr, left, right);
+            check_division_by_zero(bin->opr, right);
             return std::stod(left) / std::stod(right);
         case TokenType::STAR:
             check_number_operand(bin->opr, left, right);
@@ -108,11 +116,11 @@ Object Interpreter::visit(Binary<Object>* bin)
             if(left.underlying_type() == "double" && right.underlying_type() == "double"){
                 return std::stod(left) + std::stod(right);
             }
-            else if(left.underlying_type() == "string" && right.underlying_type() == "string"){
+            else if(left.underlying_type() == "string" || right.underlying_type() == "string"){
                 return static_cast<std::string>(left) + static_cast<std::string>(right);
             }
             else{
-                throw RuntimeError(bin->opr, "Double or String expected");
+                throw RuntimeError(bin->opr, "Adding unexpected types\n");
             }
         case TokenType::BANG_EQUAL:
             return !is_equal(left, right);
