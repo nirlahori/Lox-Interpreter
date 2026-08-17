@@ -13,6 +13,9 @@ add_executable(Lox_Interpreter src/main.cpp
     include/visitor.hpp  include/object.hpp include/expr.hpp include/astprinter.hpp
     include/parser.hpp
     src/parser.cpp
+    include/interpreter.hpp
+    src/interpreter.cpp
+    include/runtimeerror.hpp src/runtimeerror.cpp
 
 )
 

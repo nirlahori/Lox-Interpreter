@@ -8,8 +8,10 @@
 #include <exception>
 #include <iostream>
 #include <list>
+#include <iostream>
 
 bool Lox::had_error = false;
+bool Lox::had_runtime_error = false;
 
 void Lox::report(int line, std::string_view where, std::string_view msg)
 {
@@ -32,6 +34,12 @@ void Lox::error(Token token, std::string msg)
     }
 }
 
+void Lox::runtime_error(RuntimeError error)
+{
+    std::cout << error.what() << "\n" << "[line " << error.get_token().get_line() << "]";
+    had_runtime_error = true;
+}
+
 void Lox::run(std::string source)
 {
     Scanner scn(source);
@@ -44,7 +52,13 @@ void Lox::run(std::string source)
         return;
     }
 
-    std::cout << AstPrinter().print(expr.get()) << std::endl;
+    interpreter.interpret(expr.get());
+
+    if(had_runtime_error){
+        std::exit(70);
+    }
+
+    //std::cout << AstPrinter().print(expr.get()) << std::endl;
 }
 
 void Lox::run_file(std::string_view path)

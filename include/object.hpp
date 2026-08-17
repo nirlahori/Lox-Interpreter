@@ -4,24 +4,31 @@
 #include <memory>
 #include <string>
 #include <ostream>
+#include <type_traits>
+
 
 class Object{
 
 private:
 
+
     class ObjectBase{
+
         public:
+        using type = void;
         virtual std::unique_ptr<ObjectBase> clone() = 0;
         virtual std::string to_str() = 0;
+        virtual std::string underlying_type() = 0;
         virtual ~ObjectBase() = default;
     };
 
+
     template<typename ObjectType>
     class ObjectImpl : public ObjectBase{
-        private:
-        ObjectType data;
 
+        ObjectType data;
         public:
+
         ObjectImpl() = default;
         ObjectImpl(const ObjectType& _data) :
             data{_data}
@@ -37,6 +44,18 @@ private:
             }
             else{
                 return std::to_string(data);
+            }
+        }
+
+        std::string underlying_type(){
+            if(std::is_same<ObjectType, bool>::value){
+                return "bool";
+            }
+            else if(std::is_same<ObjectType, std::string>::value){
+                return "string";
+            }
+            else if(std::is_same<ObjectType, double>::value){
+                return "double";
             }
         }
 
@@ -102,6 +121,13 @@ public:
         }
         return os;
     }
+
+    std::string underlying_type() const{
+        return obj_ptr->underlying_type();
+    }
+
 };
+
+
 
 #endif // OBJECT_HPP
