@@ -1,17 +1,18 @@
-#include "lox.hpp"
-#include "scanner.hpp"
-#include "parser.hpp"
-#include "expr.hpp"
-#include "object.hpp"
-#include "astprinter.hpp"
-
 #include <exception>
 #include <iostream>
 #include <list>
 #include <iostream>
 
+#include "lox.hpp"
+#include "scanner.hpp"
+#include "parser.hpp"
+
 bool Lox::had_error = false;
 bool Lox::had_runtime_error = false;
+
+Lox::Lox() :
+    interpreter {&environment}
+    {}
 
 void Lox::report(int line, std::string_view where, std::string_view msg)
 {
@@ -44,21 +45,17 @@ void Lox::run(std::string source)
 {
     Scanner scn(source);
     std::list<Token> tokens {scn.scan_tokens()};
-
     Parser parser(tokens);
-    std::unique_ptr<Expr<Object>> expr = parser.parse();
+    std::vector<std::unique_ptr<Stmt<void>>> statements {parser.parse()};
+    interpreter.interpret(std::move(statements));
 
     if(had_error){
         return;
     }
 
-    interpreter.interpret(expr.get());
-
     if(had_runtime_error){
         std::exit(70);
     }
-
-    //std::cout << AstPrinter().print(expr.get()) << std::endl;
 }
 
 void Lox::run_file(std::string_view path)

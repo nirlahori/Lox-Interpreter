@@ -1,6 +1,5 @@
 #include <cctype>
 #include <list>
-#include <stack>
 
 #include "scanner.hpp"
 #include "lox.hpp"
@@ -84,7 +83,7 @@ void Scanner::scan_token()
         } else if (std::isalpha(ch)) {
             expect_identifier();
         } else {
-            Lox::error(line, "Unexpected character");
+            Lox::error(line, "Unexpected character\n");
         }
     }
 }
@@ -185,7 +184,6 @@ void Scanner::expect_identifier()
     }
 
     std::string str{source.substr(start, current - start)};
-    std::printf("Keyword: %s\n", str.c_str());
     if (keywords.find(str) != keywords.end()) {
         add_token(keywords.at(str));
     } else {

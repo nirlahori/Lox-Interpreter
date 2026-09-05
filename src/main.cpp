@@ -2,7 +2,6 @@
 #include <iostream>
 
 #include "expr.hpp"
-#include "astprinter.hpp"
 #include "lox.hpp"
 
 int main(int argc, char *argv[])

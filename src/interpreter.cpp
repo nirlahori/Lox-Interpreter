@@ -11,13 +11,55 @@ Object Interpreter::visit(Literal<Object>* lit)
     return lit->value;
 }
 
-void Interpreter::interpret(Expr<Object> *expr)
+Object Interpreter::visit(Variable<Object> *var)
 {
-    try{
-        Object value = evaluate(expr);
-        std::cout << value << std::endl;
+    return environment->get(var->name);
+}
+
+Object Interpreter::visit(Assign<Object> *asgn)
+{
+    Object value {evaluate(asgn->value.get())};
+    environment->assign(asgn->name, value);
+    return value;
+}
+
+void Interpreter::visit(Expression<void> *stmt)
+{
+    evaluate(stmt->expr.get());
+}
+
+void Interpreter::visit(Print<void> *prt)
+{
+    Object value = evaluate(prt->expr.get());
+    std::cout << value << std::endl;
+}
+
+void Interpreter::visit(Var<void> *var)
+{
+    Object value (nullptr);
+    if(var->initializer){
+        value = evaluate(var->initializer.get());
     }
-    catch(RuntimeError error){
+    environment->define_name(var->name.get_lexeme(), value);
+}
+
+void Interpreter::visit(Block<void> *blk)
+{
+
+    Environment env (environment);
+    execute_block(blk->statements, env);
+}
+
+void Interpreter::interpret(std::vector<std::unique_ptr<Stmt<void>>> statements)
+{
+    try {
+        for(std::unique_ptr<Stmt<void>>& stmt : statements){
+            if(stmt){
+                execute(stmt.get());
+            }
+        }
+
+    } catch (RuntimeError& error) {
         Lox::runtime_error(error);
     }
 }
@@ -52,14 +94,14 @@ bool Interpreter::is_equal(const Object &left, const Object &right)
 void Interpreter::check_number_operand(Token opr, const Object &operand)
 {
     if(operand.underlying_type() != "double"){
-        throw RuntimeError(opr, "Operand must be a number");
+        throw RuntimeError(opr, "Operand must be a number\n");
     }
 }
 
 void Interpreter::check_number_operand(Token opr, const Object &left, const Object &right)
 {
     if(left.underlying_type() != "double" || right.underlying_type() != "double"){
-        throw RuntimeError(opr, "Operands must be numbers");
+        throw RuntimeError(opr, "Operands must be numbers\n");
     }
 }
 
@@ -69,13 +111,43 @@ std::string Interpreter::stringify(Object obj)
         return "NULL";
     }
     else if(obj.underlying_type() == "double") {
-        std::string text {obj};
-        std::size_t pos {text.find('.')};
-        text.erase(pos);
-        return text;
+        //double data {static_cast<double>(obj)};
+        // std::size_t pos {text.find('.')};
+        // if(pos != std::string::npos){
+        //     text.erase(pos);
+        // }
+        return std::to_string(obj);
     }
     return obj;
 }
+
+void Interpreter::execute(Stmt<void>* stmt)
+{
+    stmt->accept(this);
+}
+
+void Interpreter::execute_block(const std::vector<std::unique_ptr<Stmt<void>>>& statements, Environment& env)
+{
+    Environment* previous = environment;
+    try{
+        this->environment = &env;
+        for(const std::unique_ptr<Stmt<void>>& stmt : statements){
+            if(stmt){
+                execute(stmt.get());
+            }
+        }
+    }
+    catch(std::exception& e){
+        throw e;
+    }
+    // If exception gets thrown then the previous environment won't get restored and the program
+    // will become ill-formed
+    this->environment = previous;
+}
+
+Interpreter::Interpreter(Environment *env) :
+    environment{env}
+    {}
 
 Object Interpreter::visit(Binary<Object>* bin)
 {
@@ -112,7 +184,7 @@ Object Interpreter::visit(Binary<Object>* bin)
                 return static_cast<std::string>(left) + static_cast<std::string>(right);
             }
             else{
-                throw RuntimeError(bin->opr, "Double or String expected");
+                throw RuntimeError(bin->opr, "Double or String expected\n");
             }
         case TokenType::BANG_EQUAL:
             return !is_equal(left, right);

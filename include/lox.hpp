@@ -10,14 +10,16 @@
 #include "token.hpp"
 #include "runtimeerror.hpp"
 #include "interpreter.hpp"
+#include "environment.hpp"
 
 class Lox
 {
+    Environment environment;
     Interpreter interpreter;
     static bool had_error;
     static bool had_runtime_error;
 public:
-    Lox() = default;
+    Lox();
 
     static void report(int line, std::string_view where, std::string_view msg);
     static void error(int line, std::string_view msg);

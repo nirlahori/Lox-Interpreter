@@ -75,7 +75,7 @@ public:
         obj_ptr{std::make_unique<ObjectImpl<T>>(_val)}
         {}
 
-    Object(std::nullptr_t _ptr) :
+    Object(std::nullptr_t) :
         obj_ptr{nullptr}
         {}
 
@@ -89,8 +89,12 @@ public:
     }
 
     Object& operator= (const Object& other){
-        Object tmp (other);
-        std::swap(tmp, *this);
+        if(!other.obj_ptr){
+            obj_ptr = nullptr;
+        }
+        else{
+            obj_ptr = other.obj_ptr->clone();
+        }
         return *this;
     }
 
@@ -98,6 +102,12 @@ public:
         obj_ptr{std::move(other.obj_ptr)}
     {
         other.obj_ptr.reset();
+    }
+
+    Object& operator= (Object&& other){
+        obj_ptr = std::move(other.obj_ptr);
+        other.obj_ptr.reset();
+        return *this;
     }
 
     bool operator== (std::nullptr_t nullobj){
