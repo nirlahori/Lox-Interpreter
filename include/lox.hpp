@@ -25,7 +25,7 @@ public:
     static void error(int line, std::string_view msg);
     static void error(Token type, std::string msg);
     static void runtime_error(RuntimeError error);
-    void run(std::string source);
+    void run(std::string source, bool is_repl_mode);
     void run_file(std::string_view path);
     void run_prompt();
 

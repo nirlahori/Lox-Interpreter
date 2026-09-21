@@ -19,6 +19,13 @@ struct Var;
 template<typename T>
 struct Block;
 
+template<typename T>
+struct If;
+
+template<typename T>
+struct While;
+
+
 
 template<typename T>
 struct Stmt{
@@ -27,6 +34,8 @@ struct Stmt{
         virtual T visit(Print<T>*) = 0;
         virtual T visit(Var<T>*) = 0;
         virtual T visit(Block<T>*) = 0;
+        virtual T visit(If<T>*) = 0;
+        virtual T visit(While<T>*) = 0;
     };
 
     Stmt() = default;
@@ -108,7 +117,44 @@ struct Block : Stmt<T>
 
 
 
+template <typename T>
+struct If : Stmt<T>
+{
+    std::unique_ptr<Expr<Object>> condition;
+    std::unique_ptr<Stmt<void>> then_branch;
+    std::unique_ptr<Stmt<void>> else_branch;
 
+    If() = default;
+
+    If(std::unique_ptr<Expr<Object>> _condition, std::unique_ptr<Stmt<void>> _then_branch, std::unique_ptr<Stmt<void>> _else_branch) :
+        condition{std::move(_condition)},
+        then_branch{std::move(_then_branch)},
+        else_branch{std::move(_else_branch)}
+        {}
+
+    T accept(typename Stmt<T>::Visitor* visitor){
+        visitor->visit(this);
+    }
+};
+
+
+template <typename T>
+struct While : Stmt<void>
+{
+
+    std::unique_ptr<Expr<Object>> condition;
+    std::unique_ptr<Stmt<void>> body;
+
+    While() = default;
+    While(std::unique_ptr<Expr<Object>> _condition, std::unique_ptr<Stmt<void>> _body) :
+        condition{std::move(_condition)},
+        body{std::move(_body)}
+        {}
+
+    T accept(typename Stmt<T>::Visitor* visitor){
+        visitor->visit(this);
+    }
+};
 
 
 #endif // STMT_HPP

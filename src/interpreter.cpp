@@ -13,7 +13,13 @@ Object Interpreter::visit(Literal<Object>* lit)
 
 Object Interpreter::visit(Variable<Object> *var)
 {
-    return environment->get(var->name);
+    if(Object val = environment->get(var->name)){
+        return val;
+    }
+    std::string err_str ("Variable ");
+    err_str += var->name.get_lexeme();
+    err_str += " must be initialized or assigned before use\n";
+    throw RuntimeError(var->name, std::move(err_str));
 }
 
 Object Interpreter::visit(Assign<Object> *asgn)
@@ -21,6 +27,23 @@ Object Interpreter::visit(Assign<Object> *asgn)
     Object value {evaluate(asgn->value.get())};
     environment->assign(asgn->name, value);
     return value;
+}
+
+Object Interpreter::visit(Logical<Object> *log)
+{
+    Object left {evaluate(log->left.get())};
+
+    if(log->opr.get_type() == TokenType::OR){
+        if(is_truthy(left)){
+            return left;
+        }
+    }
+    else{
+        if(!is_truthy(left)){
+            return left;
+        }
+    }
+    return evaluate(log->right.get());
 }
 
 void Interpreter::visit(Expression<void> *stmt)
@@ -50,6 +73,24 @@ void Interpreter::visit(Block<void> *blk)
     execute_block(blk->statements, env);
 }
 
+void Interpreter::visit(If<void> *ifstmt)
+{
+    Object val {evaluate(ifstmt->condition.get())};
+    if(is_truthy(val)){
+        execute(ifstmt->then_branch.get());
+    }
+    else if(ifstmt->else_branch){
+        execute(ifstmt->else_branch.get());
+    }
+}
+
+void Interpreter::visit(While<void> *whilestmt)
+{
+    while(is_truthy(evaluate(whilestmt->condition.get()))){
+        execute(whilestmt->body.get());
+    }
+}
+
 void Interpreter::interpret(std::vector<std::unique_ptr<Stmt<void>>> statements)
 {
     try {
@@ -73,10 +114,16 @@ bool Interpreter::is_truthy(Object val)
 {
     if(val){
         if(val.underlying_type() == "bool"){
+            std::cout << "val : " << static_cast<bool>(val) << std::endl;
             return static_cast<bool>(val);
         }
+        else if(val.underlying_type() == "double"){
+            return !(val == static_cast<double>(0));
+        }
+        std::cout << "val : " << val << " - returning true" << std::endl;
         return true;
     }
+    std::cout << "val : " << val << " - returning false" << std::endl;
     return false;
 }
 
@@ -205,7 +252,7 @@ Object Interpreter::visit(Unary<Object>* unry)
         return -static_cast<double>(value);
     }
     else{
-        return is_truthy(value);
+        return !is_truthy(value);
     }
 }
 

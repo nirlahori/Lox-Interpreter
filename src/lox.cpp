@@ -41,14 +41,19 @@ void Lox::runtime_error(RuntimeError error)
     had_runtime_error = true;
 }
 
-void Lox::run(std::string source)
+void Lox::run(std::string source, bool is_repl_mode)
 {
     Scanner scn(source);
     std::list<Token> tokens {scn.scan_tokens()};
     Parser parser(tokens);
-    std::vector<std::unique_ptr<Stmt<void>>> statements {parser.parse()};
+    std::vector<std::unique_ptr<Stmt<void>>> statements;
+    if(is_repl_mode){
+        statements = parser.parse_repl();
+    }
+    else{
+        statements = parser.parse();
+    }
     interpreter.interpret(std::move(statements));
-
     if(had_error){
         return;
     }
@@ -75,7 +80,7 @@ void Lox::run_file(std::string_view path)
     std::string input(file_size, '0');
     std::fread(input.data(), file_size, 1, prog);
     std::fclose(prog);
-    run(input);
+    run(input, false);
 
     if (had_error) {
         std::terminate();
@@ -93,7 +98,7 @@ void Lox::run_prompt()
         if (input.empty()) {
             break;
         }
-        run(input);
+        run(input, true);
         had_error = false;
     }
 }

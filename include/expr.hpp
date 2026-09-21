@@ -120,6 +120,25 @@ struct Assign : Expr<T>{
     }
 };
 
+template <typename T>
+struct Logical : Expr<T>
+{
+    std::unique_ptr<Expr<Object>> left;
+    Token opr;
+    std::unique_ptr<Expr<Object>> right;
+
+    Logical() = default;
+    Logical(std::unique_ptr<Expr<Object>> _left, Token _opr, std::unique_ptr<Expr<Object>> _right) :
+        left{std::move(_left)},
+        opr{_opr},
+        right{std::move(_right)}
+    {}
+
+    T accept(Visitor<T>* visitor){
+        return visitor->visit(this);
+    }
+};
+
 
 static std::unordered_map<std::type_index, std::string> expr_table {
     {std::type_index(typeid(Expr<Object>)),     "Expr<Object>"},
