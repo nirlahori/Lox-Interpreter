@@ -35,10 +35,13 @@ public:
     Object visit(Literal<Object>* lit);
     Object visit(Variable<Object>* var);
     Object visit(Assign<Object>* asgn);
+    Object visit(Logical<Object>* log);
     void visit(Expression<void>* expr);
     void visit(Print<void>* prt);
     void visit(Var<void>* var);
     void visit(Block<void>* blk);
+    void visit(If<void>* ifstmt);
+    void visit(While<void>* whilestmt);
     void interpret(std::vector<std::unique_ptr<Stmt<void>>> statements);
 
 

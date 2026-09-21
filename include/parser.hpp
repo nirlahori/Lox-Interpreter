@@ -28,6 +28,9 @@ class Parser
     std::unique_ptr<Stmt<void>>                declaration();
     std::unique_ptr<Stmt<void>>                var_declaration();
     std::vector<std::unique_ptr<Stmt<void>>>   block();
+    std::unique_ptr<Stmt<void>>                if_statement();
+    std::unique_ptr<Stmt<void>>                While_statement();
+    std::unique_ptr<Stmt<void>>                For_statement();
     std::unique_ptr<Expr<Object>>              assignment();
     std::unique_ptr<Expr<Object>>              equality();
     std::unique_ptr<Expr<Object>>              comparison();
@@ -35,6 +38,9 @@ class Parser
     std::unique_ptr<Expr<Object>>              factor();
     std::unique_ptr<Expr<Object>>              unary();
     std::unique_ptr<Expr<Object>>              primary();
+    std::unique_ptr<Expr<Object>>              logical_or();
+    std::unique_ptr<Expr<Object>>              logical_and();
+
 
 
     bool match(const std::vector<TokenType>& tokens);

@@ -119,6 +119,9 @@ public:
     }
 
     operator bool() const{
+        if(obj_ptr.get() && obj_ptr.get()->to_str() == "0"){
+            return false;
+        }
         return obj_ptr.get();
     }
 
@@ -150,6 +153,13 @@ public:
         else{
             return false;
         }
+    }
+
+    friend bool operator== (const Object& lhs, const double& rhs){
+        if(lhs.underlying_type() == "double"){
+            return std::stod(lhs) == rhs;
+        }
+        return false;
     }
 };
 

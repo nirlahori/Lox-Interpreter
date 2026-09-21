@@ -1,0 +1,120 @@
+var i=0;
+var j=45;
+var k=54;
+if(i == 0){
+	print "i is equal to 0";
+}
+else{
+	print "i is not equal to 0";
+}
+
+if(j > 50){
+	print "j is more than 50";
+}
+else{
+	print "j is less than 50";
+}
+
+if(k + 40 > 100){
+	print "Adding 40 to k is more than 100";
+}
+
+if(k - 40 < 30){
+	print "Substracting 40 from k is less than 30";	
+}
+
+if(200 == 20 * 10){
+	print "200 is equal to 20 times 10";
+}
+
+if(true){
+	print "1. if branch is true";
+}
+else{
+	print "1. else branch is true";
+}
+
+
+if(false){
+	print "2. if branch is true";
+}
+else{
+	print "2. else branch is true";
+}
+
+print "======================================================";
+
+if(!true){
+	print "3. if branch is true";
+}
+else{
+	print "3. else branch is true";
+}
+
+if(!false){
+	print "4. if branch is true";
+}
+else{
+	print "4. else branch is true";
+}
+
+print "=============================================";
+
+
+if(1){
+	print "5. if branch is true";
+}
+else{
+	print "5. else branch is true";
+}
+
+if(0){
+	print "6. if branch is true";
+}
+else{
+	print "6. else branch is true";
+}
+
+if(!1){
+	print "7. if branch is true";
+}
+else{
+	print "7. else branch is true";
+}
+
+if(!0){
+	print "8. if branch is true";
+}
+else{
+	print "8. else branch is true";
+}
+
+var n = "Hello";
+var m;
+
+
+if(n){
+	print "n is true";
+}
+else{
+	print "n is false";
+}
+
+if(m){
+	print "m is true";
+}
+else{
+	print "m is false";
+}
+
+m = 10;
+
+if(m){
+	print "m is true";
+}
+else{
+	print "m is false";
+}
+
+
+

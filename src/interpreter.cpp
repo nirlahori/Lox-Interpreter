@@ -23,6 +23,23 @@ Object Interpreter::visit(Assign<Object> *asgn)
     return value;
 }
 
+Object Interpreter::visit(Logical<Object> *log)
+{
+    Object left {evaluate(log->left.get())};
+
+    if(log->opr.get_type() == TokenType::OR){
+        if(is_truthy(left)){
+            return left;
+        }
+    }
+    else{
+        if(!is_truthy(left)){
+            return left;
+        }
+    }
+    return evaluate(log->right.get());
+}
+
 void Interpreter::visit(Expression<void> *stmt)
 {
     evaluate(stmt->expr.get());
@@ -50,6 +67,24 @@ void Interpreter::visit(Block<void> *blk)
     execute_block(blk->statements, env);
 }
 
+void Interpreter::visit(If<void> *ifstmt)
+{
+    Object val {evaluate(ifstmt->condition.get())};
+    if(is_truthy(val)){
+        execute(ifstmt->then_branch.get());
+    }
+    else if(ifstmt->else_branch){
+        execute(ifstmt->else_branch.get());
+    }
+}
+
+void Interpreter::visit(While<void> *whilestmt)
+{
+    while(is_truthy(evaluate(whilestmt->condition.get()))){
+        execute(whilestmt->body.get());
+    }
+}
+
 void Interpreter::interpret(std::vector<std::unique_ptr<Stmt<void>>> statements)
 {
     try {
@@ -74,6 +109,9 @@ bool Interpreter::is_truthy(Object val)
     if(val){
         if(val.underlying_type() == "bool"){
             return static_cast<bool>(val);
+        }
+        else if(val.underlying_type() == "double"){
+            return !(val == static_cast<double>(0));
         }
         return true;
     }
@@ -205,7 +243,7 @@ Object Interpreter::visit(Unary<Object>* unry)
         return -static_cast<double>(value);
     }
     else{
-        return is_truthy(value);
+        return !is_truthy(value);
     }
 }
 

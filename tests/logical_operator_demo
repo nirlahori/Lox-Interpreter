@@ -1,0 +1,78 @@
+var i=10;
+var j=30;
+
+if(i > 0 and j > 0){
+	print "i and j are positive";
+}
+
+i=i-20;
+
+if(i > 0 and j > 0){
+	print "i and j are positive";
+}
+
+if(i > 0 or j > 0){
+	print "i or j are positive";
+}
+
+if(i < 0 and j < 0){
+	print "i and j are negative";
+}
+
+if(true and true){
+	print "1. Both expressions are true";
+}
+else{
+	print "1. Atleast one expression is false";
+}
+
+
+if(true and false){
+	print "2. Both expressions are true";
+}
+else{
+	print "2. Atleast one expression is false";
+}
+
+if(false and true){
+	print "3. Both expressions are true";
+}
+else{
+	print "3. Atleast one expression is false";
+}
+
+if(false and false){
+	print "4. Both expressions are true";
+}
+else{
+	print "4. Atleast one expression is false";
+}
+
+
+if(true or true){
+	print "5. Atleast one expression is true";
+}
+else{
+	print "5. Both expressions are false";
+}
+
+if(true or false){
+	print "6. Atleast one expression is true";
+}
+else{
+	print "6. Both expressions are false";
+}
+
+if(false or true){
+	print "7. Atleast one expression is true";
+}
+else{
+	print "7. Both expressions are false";
+}
+
+if(false or false){
+	print "8. Atleast one expression is true";
+}
+else{
+	print "8. Both expressions are false";
+}

@@ -1,0 +1,12 @@
+print 12+2;
+print "HELLO";
+var a=10;
+print a;
+var b=a;
+print b;
+var c=3;
+{
+	var c=c+2;
+	print c;
+}
+print c;

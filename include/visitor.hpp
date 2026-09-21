@@ -19,6 +19,10 @@ struct Variable;
 template<typename T>
 struct Assign;
 
+template<typename T>
+struct Logical;
+
+
 
 template<typename T>
 struct Visitor{
@@ -29,6 +33,8 @@ struct Visitor{
     virtual T visit(Literal<T>*) = 0;
     virtual T visit(Variable<T>*) = 0;
     virtual T visit(Assign<T>*) = 0;
+    virtual T visit(Logical<T>*) = 0;
+
 };
 
 #endif // VISITOR_HPP

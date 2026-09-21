@@ -20,7 +20,89 @@ std::unique_ptr<Stmt<void>> Parser::statement()
     if(match({TokenType::LEFT_BRACE})){
         return std::make_unique<Block<void>>(block());
     }
+    if(match({TokenType::IF})){
+        return if_statement();
+    }
+    if(match({TokenType::WHILE})){
+        return While_statement();
+    }
+    if(match({TokenType::FOR})){
+        return For_statement();
+    }
     return expression_statement();
+}
+
+std::unique_ptr<Stmt<void>> Parser::if_statement(){
+    consume(TokenType::LEFT_PAREN, "Expect '(' after if");
+    std::unique_ptr<Expr<Object>> condition {expression()};
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after if condition");
+
+    std::unique_ptr<Stmt<void>> then_branch {statement()};
+    std::unique_ptr<Stmt<void>> else_branch {};
+    if(match({TokenType::ELSE})){
+        else_branch = statement();
+    }
+    return std::make_unique<If<void>>(std::move(condition), std::move(then_branch), std::move(else_branch));
+}
+
+std::unique_ptr<Stmt<void>> Parser::While_statement()
+{
+    consume(TokenType::LEFT_PAREN, "Expect '(' after while.");
+    std::unique_ptr<Expr<Object>> condition {expression()};
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
+    std::unique_ptr<Stmt<void>> body {statement()};
+    return std::make_unique<While<void>>(std::move(condition), std::move(body));
+}
+
+std::unique_ptr<Stmt<void>> Parser::For_statement()
+{
+
+    consume(TokenType::LEFT_PAREN, "Expect '(' after for.");
+    std::unique_ptr<Stmt<void>> init_stmt;
+
+    if(match({TokenType::SEMICOLON})){
+        init_stmt = nullptr;
+    }
+    else if(match({TokenType::VAR})){
+        init_stmt = var_declaration();
+    }
+    else{
+        init_stmt = expression_statement();
+    }
+
+    std::unique_ptr<Expr<Object>> cond {};
+    if(!check(TokenType::SEMICOLON)){
+        cond = expression();
+    }
+    consume(TokenType::SEMICOLON, "Expect ';' after loop condition");
+
+    std::unique_ptr<Expr<Object>> incr;
+    if(!check(TokenType::RIGHT_PAREN)){
+        incr = expression();
+    }
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after for clauses");
+
+    std::unique_ptr<Stmt<void>> body {statement()};
+
+    if(incr){
+        std::vector<std::unique_ptr<Stmt<void>>> loop_body;
+        loop_body.push_back(std::move(body));
+        loop_body.push_back(std::make_unique<Expression<void>>(std::move(incr)));
+        body = std::make_unique<Block<void>>(std::move(loop_body));
+    }
+
+    if(!cond){
+        cond = std::make_unique<Literal<Object>>(true);
+    }
+    body = std::make_unique<While<void>>(std::move(cond), std::move(body));
+
+    if(init_stmt){
+        std::vector<std::unique_ptr<Stmt<void>>> init_body;
+        init_body.push_back(std::move(init_stmt));
+        init_body.push_back(std::move(body));
+        body = std::make_unique<Block<void>>(std::move(init_body));
+    }
+    return body;
 }
 
 std::unique_ptr<Stmt<void>> Parser::print_statement()
@@ -80,7 +162,7 @@ std::vector<std::unique_ptr<Stmt<void>>> Parser::block()
 
 std::unique_ptr<Expr<Object>> Parser::assignment()
 {
-    std::unique_ptr<Expr<Object>> expr {equality()};
+    std::unique_ptr<Expr<Object>> expr {logical_or()};
     auto ptr = expr.get();
 
     if(match({TokenType::EQUAL})){
@@ -178,6 +260,27 @@ std::unique_ptr<Expr<Object>> Parser::primary()
     throw error(peek(), "Expect expression\n");
 }
 
+std::unique_ptr<Expr<Object>> Parser::logical_or()
+{
+    std::unique_ptr<Expr<Object>> expr {logical_and()};
+    while(match({TokenType::OR})){
+        Token token {previous()};
+        std::unique_ptr<Expr<Object>> right {logical_and()};
+        expr = std::make_unique<Logical<Object>>(std::move(expr), token, std::move(right));
+    }
+    return expr;
+}
+
+std::unique_ptr<Expr<Object>> Parser::logical_and()
+{
+    std::unique_ptr<Expr<Object>> expr {equality()};
+    while(match({TokenType::AND})){
+        Token token {previous()};
+        std::unique_ptr<Expr<Object>> right {equality()};
+        expr = std::make_unique<Logical<Object>>(std::move(expr), token, std::move(right));
+    }
+    return expr;
+}
 bool Parser::check(TokenType type)
 {
     if(is_at_end()){

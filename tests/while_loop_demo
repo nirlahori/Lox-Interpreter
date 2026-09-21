@@ -1,0 +1,21 @@
+
+print "Displaying first 10 integers";
+var i=0;
+while(i < 10){
+	print i;
+	i = i + 1;
+}
+
+print "Displaying first 10 integers in reverse";
+while(i > 0){
+	print i;
+	i = i - 1;
+}
+
+while(false){
+	print "This line shouldn't be printed";
+}
+
+while(!false){
+	print "Infinite loop";
+}
