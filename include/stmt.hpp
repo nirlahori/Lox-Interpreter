@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <vector>
+#include <map>
+#include <typeindex>
 #include "expr.hpp"
 #include "token.hpp"
 
@@ -25,6 +27,11 @@ struct If;
 template<typename T>
 struct While;
 
+template<typename T>
+struct Function;
+
+template<typename T>
+struct Return;
 
 
 template<typename T>
@@ -36,6 +43,8 @@ struct Stmt{
         virtual T visit(Block<T>*) = 0;
         virtual T visit(If<T>*) = 0;
         virtual T visit(While<T>*) = 0;
+        virtual T visit(Function<T>*) = 0;
+        virtual T visit(Return<T>*) = 0;
     };
 
     Stmt() = default;
@@ -150,6 +159,42 @@ struct While : Stmt<void>
         condition{std::move(_condition)},
         body{std::move(_body)}
         {}
+
+    T accept(typename Stmt<T>::Visitor* visitor){
+        visitor->visit(this);
+    }
+};
+
+template <typename T>
+struct Function : Stmt<void>
+{
+    Token name;
+    std::vector<Token> params;
+    std::vector<std::unique_ptr<Stmt<void>>> body;
+
+    Function(Token _name, std::vector<Token> _params, std::vector<std::unique_ptr<Stmt<void>>> _body) :
+        name{_name},
+        params{std::move(_params)},
+        body{std::move(_body)}
+    {}
+
+    T accept(typename Stmt<T>::Visitor* visitor){
+        visitor->visit(this);
+    }
+
+};
+
+template <typename T>
+struct Return : Stmt<void>
+{
+    Token keyword;
+    std::unique_ptr<Expr<Object>> value;
+
+    Return();
+    Return(Token _keyword, std::unique_ptr<Expr<Object>> _value) :
+        keyword{_keyword},
+        value{std::move(_value)}
+    {}
 
     T accept(typename Stmt<T>::Visitor* visitor){
         visitor->visit(this);

@@ -1,0 +1,12 @@
+var a = 10;
+
+fun sum(m, n){
+	var a = m + n;
+	print "inner a: ";
+	print a;
+}
+
+sum(10,12);
+print "outer a: ";
+print a;
+

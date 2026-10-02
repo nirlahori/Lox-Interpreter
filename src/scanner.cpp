@@ -213,6 +213,7 @@ std::list<Token> Scanner::scan_tokens()
 
 std::map<std::string, TokenType> Scanner::keywords{
     {"and",    TokenType::AND},
+    {"break",  TokenType::BREAK},
     {"class",  TokenType::CLASS},
     {"else",   TokenType::ELSE},
     {"false",  TokenType::FALSE},

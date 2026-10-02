@@ -1,0 +1,18 @@
+fun sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
+}
+
+fun show(){
+	print "You called show()";
+}
+
+fun add(first, second){
+	var sum = first + second;
+	print "Sum: ";
+	print sum;
+}
+
+
+sayHi("Dear", "Reader");
+show();
+add(23, 23);

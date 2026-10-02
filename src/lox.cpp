@@ -1,7 +1,6 @@
 #include <exception>
 #include <iostream>
 #include <list>
-#include <iostream>
 
 #include "lox.hpp"
 #include "scanner.hpp"
@@ -11,7 +10,8 @@ bool Lox::had_error = false;
 bool Lox::had_runtime_error = false;
 
 Lox::Lox() :
-    interpreter {&environment}
+    //interpreter {&environment}
+    interpreter {}
     {}
 
 void Lox::report(int line, std::string_view where, std::string_view msg)

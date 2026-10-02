@@ -20,6 +20,11 @@ add_executable(Lox_Interpreter src/main.cpp
     include/runtimeerror.hpp src/runtimeerror.cpp
     include/stmt.hpp
     include/environment.hpp src/environment.cpp
+    include/loxcallable.hpp
+    include/loxfunction.hpp src/loxfunction.cpp
+
+    src/object.cpp
+    include/returnvalue.hpp
 
 )
 

@@ -1,0 +1,12 @@
+fun add(m, n){
+	return m + n;
+}
+
+fun sub(m, n){
+	return m - n;
+}
+
+
+print add(23, 33);
+print sub(45, 32);
+

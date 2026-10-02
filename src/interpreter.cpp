@@ -1,7 +1,12 @@
 #include "interpreter.hpp"
 #include "runtimeerror.hpp"
+#include "loxcallable.hpp"
+#include "loxfunction.hpp"
+#include "returnvalue.hpp"
+
 #include "lox.hpp"
 #include <iostream>
+#include <optional>
 
 Interpreter::Interpreter() = default;
 
@@ -40,6 +45,23 @@ Object Interpreter::visit(Logical<Object> *log)
     return evaluate(log->right.get());
 }
 
+Object Interpreter::visit(Call<Object> *call)
+{
+    Object callee {evaluate(call->callee.get())};
+    std::vector<Object> arguments;
+    for(std::unique_ptr<Expr<Object>>& ptr : call->arguments){
+        arguments.push_back(evaluate(ptr.get()));
+    }
+    LoxCallable* function {callee.as_callable()};
+    if(!function){
+        throw RuntimeError(call->paren, "Can only call functions and classes\n");
+    }
+    if(arguments.size() != function->arity()){
+        throw RuntimeError(call->paren, "Expected " + std::to_string(function->arity()) + " arguments but got " + std::to_string(arguments.size()));
+    }
+    return function->call(this, std::move(arguments));
+}
+
 void Interpreter::visit(Expression<void> *stmt)
 {
     evaluate(stmt->expr.get());
@@ -62,7 +84,6 @@ void Interpreter::visit(Var<void> *var)
 
 void Interpreter::visit(Block<void> *blk)
 {
-
     Environment env (environment);
     execute_block(blk->statements, env);
 }
@@ -85,6 +106,27 @@ void Interpreter::visit(While<void> *whilestmt)
     }
 }
 
+void Interpreter::visit(Function<void> *fun)
+{
+    LoxFunction function {fun};
+    if(environment == get_global_environment()){
+        function.set_closure(std::nullopt);
+    }
+    else{
+        function.set_closure(*environment);
+    }
+    environment->define_name(fun->name.get_lexeme(), function);
+}
+
+void Interpreter::visit(Return<void> *ret)
+{
+    Object value {nullptr};
+    if(ret->value){
+        value = evaluate(ret->value.get());
+    }
+    throw ReturnValue{.value=value};
+}
+
 void Interpreter::interpret(std::vector<std::unique_ptr<Stmt<void>>> statements)
 {
     try {
@@ -97,6 +139,11 @@ void Interpreter::interpret(std::vector<std::unique_ptr<Stmt<void>>> statements)
     } catch (RuntimeError& error) {
         Lox::runtime_error(error);
     }
+}
+
+Environment* Interpreter::get_global_environment()
+{
+    return &globals;
 }
 
 Object Interpreter::evaluate(Expr<Object> *expr)
@@ -174,6 +221,10 @@ void Interpreter::execute_block(const std::vector<std::unique_ptr<Stmt<void>>>& 
                 execute(stmt.get());
             }
         }
+    }
+    catch(ReturnValue& e){
+        this->environment = previous;
+        throw e;
     }
     catch(std::exception& e){
         throw e;

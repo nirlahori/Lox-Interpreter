@@ -1,0 +1,11 @@
+
+fun show(n){
+	print "received ";
+	print n;
+}
+
+fun display(n){
+	show(n + 23);
+}
+
+display(10);

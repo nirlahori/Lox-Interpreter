@@ -21,9 +21,10 @@ class Interpreter : public Visitor<Object>, public Stmt<void>::Visitor
 
     void execute(Stmt<void>* stmt);
 
-    Environment* environment;
 
-    void execute_block(const std::vector<std::unique_ptr<Stmt<void>>>&, Environment&);
+    Environment globals;
+    Environment* environment {&globals};
+
 
 public:
     Interpreter();
@@ -36,13 +37,22 @@ public:
     Object visit(Variable<Object>* var);
     Object visit(Assign<Object>* asgn);
     Object visit(Logical<Object>* log);
+    Object visit(Call<Object>* call);
+
     void visit(Expression<void>* expr);
     void visit(Print<void>* prt);
     void visit(Var<void>* var);
     void visit(Block<void>* blk);
     void visit(If<void>* ifstmt);
     void visit(While<void>* whilestmt);
+    void visit(Function<void>* fun);
+    void visit(Return<void>* ret);
+
+
     void interpret(std::vector<std::unique_ptr<Stmt<void>>> statements);
+    Environment* get_global_environment();
+    void execute_block(const std::vector<std::unique_ptr<Stmt<void>>>&, Environment&);
+
 
 
 };

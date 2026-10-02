@@ -16,7 +16,7 @@ class Environment
 public:
     Environment();
     Environment(Environment* env);
-    void define_name(std::string name, Object value);
+    void define_name(std::string name, const Object& value);
     Object get(Token name);
     void assign(Token name, const Object& value);
 };

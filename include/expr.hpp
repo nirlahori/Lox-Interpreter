@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <typeindex>
 #include <string>
+#include <vector>
 
 #include "token.hpp"
 #include "visitor.hpp"
@@ -139,6 +140,25 @@ struct Logical : Expr<T>
     }
 };
 
+template <typename T>
+struct Call : Expr<T>
+{
+    std::unique_ptr<Expr<Object>> callee;
+    Token paren;
+    std::vector<std::unique_ptr<Expr<Object>>> arguments;
+
+    Call() = default;
+    Call(std::unique_ptr<Expr<Object>> _callee, Token _paren, std::vector<std::unique_ptr<Expr<Object>>> _arguments) :
+        callee{std::move(_callee)},
+        paren{_paren},
+        arguments{std::move(_arguments)}
+    {}
+
+    T accept(Visitor<T>* visitor){
+        return visitor->visit(this);
+    }
+};
+
 
 static std::unordered_map<std::type_index, std::string> expr_table {
     {std::type_index(typeid(Expr<Object>)),     "Expr<Object>"},
@@ -147,7 +167,8 @@ static std::unordered_map<std::type_index, std::string> expr_table {
     {std::type_index(typeid(Grouping<Object>)), "Grouping<Object>"},
     {std::type_index(typeid(Literal<Object>)),  "Literal<Object>"},
     {std::type_index(typeid(Variable<Object>)), "Variable<Object>"},
-    {std::type_index(typeid(Assign<Object>)),   "Assign<Object>"}
+    {std::type_index(typeid(Assign<Object>)),   "Assign<Object>"},
+    {std::type_index(typeid(Call<Object>)),     "Call<Object>"}
 };
 
 

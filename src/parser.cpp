@@ -29,6 +29,9 @@ std::unique_ptr<Stmt<void>> Parser::statement()
     if(match({TokenType::FOR})){
         return For_statement();
     }
+    if(match({TokenType::RETURN})){
+        return Return_statement();
+    }
     return expression_statement();
 }
 
@@ -105,6 +108,37 @@ std::unique_ptr<Stmt<void>> Parser::For_statement()
     return body;
 }
 
+std::unique_ptr<Stmt<void>> Parser::function(std::string_view kind)
+{
+    Token name {consume(TokenType::IDENTIFIER, "Expect " + std::string(kind) + " name\n")};
+    consume(TokenType::LEFT_PAREN, "Expect '(' after " + std::string(kind) + " name\n");
+    std::vector<Token> parameters;
+    if(!check(TokenType::RIGHT_PAREN)){
+        do{
+            if(parameters.size() >= 255){
+                error(peek(), "Can't have more than 255 parameters\n");
+            }
+            parameters.push_back(consume(TokenType::IDENTIFIER, "Expect parameter name\n"));
+        }
+        while(match({TokenType::COMMA}));
+    }
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters\n");
+    consume(TokenType::LEFT_BRACE, "Expect '{' before " + std::string(kind) + " body\n");
+    std::vector<std::unique_ptr<Stmt<void>>> body {block()};
+    return std::make_unique<Function<void>>(name, std::move(parameters), std::move(body));
+}
+
+std::unique_ptr<Stmt<void>> Parser::Return_statement()
+{
+    Token keyword {previous()};
+    std::unique_ptr<Expr<Object>> value {nullptr};
+    if(!match({TokenType::SEMICOLON})){
+        value = expression();
+    }
+    consume(TokenType::SEMICOLON, "Expect ';' after return value\n");
+    return std::make_unique<Return<void>>(keyword, std::move(value));
+}
+
 std::unique_ptr<Stmt<void>> Parser::print_statement()
 {
     std::unique_ptr<Expr<Object>> value {expression()};
@@ -122,7 +156,9 @@ std::unique_ptr<Stmt<void>> Parser::expression_statement()
 std::unique_ptr<Stmt<void>> Parser::declaration()
 {
     try {
-
+        if(match({TokenType::FUN})){
+            return function("function");
+        }
         if(match({TokenType::VAR})){
             return var_declaration();
         }
@@ -157,7 +193,6 @@ std::vector<std::unique_ptr<Stmt<void>>> Parser::block()
     }
     consume(TokenType::RIGHT_BRACE, "Expect '}' after block\n");
     return statements;
-
 }
 
 std::unique_ptr<Expr<Object>> Parser::assignment()
@@ -228,7 +263,7 @@ std::unique_ptr<Expr<Object>> Parser::unary()
         std::unique_ptr<Expr<Object>> right = unary();
         return std::make_unique<Unary<Object>>(opr, std::move(right));
     }
-    return primary();
+    return call();
 }
 
 std::unique_ptr<Expr<Object>> Parser::primary()
@@ -278,6 +313,20 @@ std::unique_ptr<Expr<Object>> Parser::logical_and()
         Token token {previous()};
         std::unique_ptr<Expr<Object>> right {equality()};
         expr = std::make_unique<Logical<Object>>(std::move(expr), token, std::move(right));
+    }
+    return expr;
+}
+
+std::unique_ptr<Expr<Object>> Parser::call()
+{
+    std::unique_ptr<Expr<Object>> expr {primary()};
+    while(true){
+        if(match({TokenType::LEFT_PAREN})){
+            expr = finish_call(std::move(expr));
+        }
+        else{
+            break;
+        }
     }
     return expr;
 }
@@ -364,14 +413,30 @@ bool Parser::match(const std::vector<TokenType> &tokens)
 Parser::Parser(std::list<Token> _tokens) :
     tokens{_tokens},
     current {tokens.begin()}
-{}
+    {}
 
 std::vector<std::unique_ptr<Stmt<void>>> Parser::parse()
 {
-
     std::vector<std::unique_ptr<Stmt<void>>> statements;
     while(!is_at_end()){
         statements.push_back(declaration());
     }
     return statements;
+}
+
+std::unique_ptr<Expr<Object>> Parser::finish_call(std::unique_ptr<Expr<Object>> callee)
+{
+
+    std::vector<std::unique_ptr<Expr<Object>>> arguments;
+    if(!check(TokenType::RIGHT_PAREN)){
+        do{
+            if(arguments.size() >= 255){
+                error(peek(), "Can't have more than 255 arguments\n");
+            }
+            arguments.push_back(expression());
+        }
+        while(match({TokenType::COMMA}));
+    }
+    Token right_paren {consume(TokenType::RIGHT_PAREN, "Expect ')' after arguments\n")};
+    return std::make_unique<Call<Object>>(std::move(callee), right_paren, std::move(arguments));
 }

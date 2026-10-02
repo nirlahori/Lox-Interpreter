@@ -1,0 +1,21 @@
+fun add(m, n){
+	return m + n;
+}
+
+fun sub(m, n){
+	return m - n;
+}
+
+fun mul(m, n){
+	return m * n;
+}
+
+fun div(m, n){
+	return m / n;
+}
+
+
+print add(10, 25);
+print sub(32, 20);
+print mul(24, 24);
+print div(473, 64);

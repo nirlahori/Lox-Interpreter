@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "environment.hpp"
 #include "runtimeerror.hpp"
 
@@ -13,7 +11,7 @@ Environment::Environment(Environment* env) :
     enclosing {env}
     {}
 
-void Environment::define_name(std::string name, Object value)
+void Environment::define_name(std::string name, const Object& value)
 {
     values.insert(std::pair<std::string, Object>(name, value));
 }
@@ -41,3 +39,4 @@ void Environment::assign(Token name, const Object &value)
         throw RuntimeError(name, "Undefined variable '" + name.get_lexeme() +"'.\n");
     }
 }
+

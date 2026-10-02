@@ -8,7 +8,6 @@
 #include "tokentype.hpp"
 #include "object.hpp"
 
-
 class Token
 {
 

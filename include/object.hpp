@@ -4,13 +4,14 @@
 #include <memory>
 #include <string>
 #include <ostream>
-#include <type_traits>
+
+class  LoxFunction;
+struct LoxCallable;
 
 
 class Object{
 
 private:
-
 
     class ObjectBase{
 
@@ -19,6 +20,7 @@ private:
         virtual std::unique_ptr<ObjectBase> clone() = 0;
         virtual std::string to_str() = 0;
         virtual std::string underlying_type() = 0;
+        virtual LoxCallable* as_callable() = 0;
         virtual ~ObjectBase() = default;
     };
 
@@ -27,12 +29,12 @@ private:
     class ObjectImpl : public ObjectBase{
 
         ObjectType data;
-        public:
+    public:
 
         ObjectImpl() = default;
         ObjectImpl(const ObjectType& _data) :
             data{_data}
-            {}
+        {}
 
         std::unique_ptr<ObjectBase> clone() {
             return std::make_unique<ObjectImpl<ObjectType>>(*this);
@@ -43,7 +45,12 @@ private:
                 return data;
             }
             else{
-                return std::to_string(data);
+                if constexpr(std::is_same_v<LoxFunction, ObjectType>){
+                    return data.to_string();
+                }
+                else{
+                    return std::to_string(data);
+                }
             }
         }
 
@@ -57,73 +64,47 @@ private:
             else if(std::is_same<ObjectType, double>::value){
                 return "double";
             }
+            else if(std::is_same<ObjectType, LoxFunction>::value){
+                return "lox_function";
+            }
+        }
+
+        LoxCallable* as_callable(){
+            if constexpr(std::is_base_of<LoxCallable, ObjectType>::value){
+                return &data;
+            }
+            else{
+                return nullptr;
+            }
         }
 
         ~ObjectImpl() = default;
 
     };
 
+
     std::unique_ptr<ObjectBase> obj_ptr;
 
 
 public:
 
-    Object() = default;
+    Object();
 
     template<typename T>
     Object(const T& _val) :
         obj_ptr{std::make_unique<ObjectImpl<T>>(_val)}
-        {}
+    {}
+    Object(std::nullptr_t);
+    Object(const Object& other);
+    Object& operator= (const Object& other);
 
-    Object(std::nullptr_t) :
-        obj_ptr{nullptr}
-        {}
+    Object(Object&& other);
 
-    Object(const Object& other){
-        if(!other.obj_ptr){
-            obj_ptr = nullptr;
-        }
-        else{
-            obj_ptr = other.obj_ptr->clone();
-        }
-    }
+    Object& operator= (Object&& other);
+    bool operator== (std::nullptr_t nullobj);
 
-    Object& operator= (const Object& other){
-        if(!other.obj_ptr){
-            obj_ptr = nullptr;
-        }
-        else{
-            obj_ptr = other.obj_ptr->clone();
-        }
-        return *this;
-    }
-
-    Object(Object&& other) :
-        obj_ptr{std::move(other.obj_ptr)}
-    {
-        other.obj_ptr.reset();
-    }
-
-    Object& operator= (Object&& other){
-        obj_ptr = std::move(other.obj_ptr);
-        other.obj_ptr.reset();
-        return *this;
-    }
-
-    bool operator== (std::nullptr_t nullobj){
-        return obj_ptr == nullobj;
-    }
-
-    operator std::string () const{
-        return obj_ptr->to_str();
-    }
-
-    operator bool() const{
-        if(obj_ptr.get() && obj_ptr.get()->to_str() == "0"){
-            return false;
-        }
-        return obj_ptr.get();
-    }
+    operator std::string () const;
+    operator bool() const;
 
 
     friend std::ostream& operator<< (std::ostream& os, Object obj){
@@ -136,9 +117,8 @@ public:
         return os;
     }
 
-    std::string underlying_type() const{
-        return obj_ptr->underlying_type();
-    }
+    std::string underlying_type() const;
+    LoxCallable* as_callable();
 
     friend bool operator== (const Object& lhs, const Object& rhs){
         if(lhs.underlying_type() == "double" && rhs.underlying_type() == "double"){

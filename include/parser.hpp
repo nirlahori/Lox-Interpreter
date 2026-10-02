@@ -4,6 +4,7 @@
 #include <list>
 #include <vector>
 #include <exception>
+#include <string_view>
 
 #include "tokentype.hpp"
 #include "token.hpp"
@@ -16,10 +17,8 @@ class Parser
 
     struct ParseError : std::exception{};
 
-
     std::list<Token> tokens;
     std::list<Token>::iterator current;
-
 
     std::unique_ptr<Expr<Object>>              expression();
     std::unique_ptr<Stmt<void>>                statement();
@@ -31,6 +30,8 @@ class Parser
     std::unique_ptr<Stmt<void>>                if_statement();
     std::unique_ptr<Stmt<void>>                While_statement();
     std::unique_ptr<Stmt<void>>                For_statement();
+    std::unique_ptr<Stmt<void>>                function(std::string_view);
+    std::unique_ptr<Stmt<void>>                Return_statement();
     std::unique_ptr<Expr<Object>>              assignment();
     std::unique_ptr<Expr<Object>>              equality();
     std::unique_ptr<Expr<Object>>              comparison();
@@ -40,7 +41,7 @@ class Parser
     std::unique_ptr<Expr<Object>>              primary();
     std::unique_ptr<Expr<Object>>              logical_or();
     std::unique_ptr<Expr<Object>>              logical_and();
-
+    std::unique_ptr<Expr<Object>>              call();
 
 
     bool match(const std::vector<TokenType>& tokens);
@@ -55,10 +56,13 @@ class Parser
     void synchronize();
 
 
+
 public:
     Parser();
     Parser(std::list<Token> _tokens);
     std::vector<std::unique_ptr<Stmt<void>>> parse();
+private:
+    std::unique_ptr<Expr<Object>> finish_call(std::unique_ptr<Expr<Object>> callee);
 };
 
 #endif // PARSER_HPP
