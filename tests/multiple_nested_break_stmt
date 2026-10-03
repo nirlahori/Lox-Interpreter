@@ -1,0 +1,38 @@
+
+var m = 0;
+var n = 0;
+var o = 0;
+var flag = false;
+for(var i=0; i<25; i=i+1){
+	for(var j=0; j<20; j=j+1){
+		for(var k=3; k<99; k=k+3){
+			for(var l=10; l<50; l=l+5){
+				print "l:";
+				print l;
+			}
+			if(k > 66){
+				m = i;
+				n = j;
+				o = k;
+				flag = true;
+				break;
+			}
+		}
+		if(flag){
+			break;
+		}
+	}
+	if(flag){
+		break;
+	}
+}
+
+
+print "i: ";
+print m;
+
+print "j: ";
+print n;
+
+print "k: ";
+print o;

@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <vector>
+#include <map>
+#include <typeindex>
 #include "expr.hpp"
 #include "token.hpp"
 
@@ -25,6 +27,8 @@ struct If;
 template<typename T>
 struct While;
 
+template<typename T>
+struct Break;
 
 
 template<typename T>
@@ -36,6 +40,7 @@ struct Stmt{
         virtual T visit(Block<T>*) = 0;
         virtual T visit(If<T>*) = 0;
         virtual T visit(While<T>*) = 0;
+	virtual T visit(Break<T>*) = 0;
     };
 
     Stmt() = default;
@@ -156,5 +161,18 @@ struct While : Stmt<void>
     }
 };
 
+template <typename T>
+struct Break : Stmt<void>
+{
+    Break() = default;
+    T accept(typename Stmt<T>::Visitor* visitor){
+        visitor->visit(this);
+    }
+};
+
+
+static std::map<std::type_index, std::string> stmt_table {
+    {std::type_index(typeid(Break<void>)), "Break<void>"}
+};
 
 #endif // STMT_HPP

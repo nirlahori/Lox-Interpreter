@@ -24,7 +24,7 @@ class Interpreter : public Visitor<Object>, public Stmt<void>::Visitor
     Environment* environment;
 
     void execute_block(const std::vector<std::unique_ptr<Stmt<void>>>&, Environment&);
-
+    bool is_break_active {false};
 public:
     Interpreter();
     Interpreter(Environment* env);
@@ -42,9 +42,8 @@ public:
     void visit(Block<void>* blk);
     void visit(If<void>* ifstmt);
     void visit(While<void>* whilestmt);
+    void visit(Break<void>*) {}
     void interpret(std::vector<std::unique_ptr<Stmt<void>>> statements);
-
-
 };
 
 #endif // INTERPRETER_HPP

@@ -12,16 +12,16 @@ std::unique_ptr<Expr<Object>> Parser::expression()
     return assignment();
 }
 
-std::unique_ptr<Stmt<void>> Parser::statement()
+std::unique_ptr<Stmt<void>> Parser::statement(ParseContext context)
 {
     if(match({TokenType::PRINT})){
         return print_statement();
     }
     if(match({TokenType::LEFT_BRACE})){
-        return std::make_unique<Block<void>>(block());
+        return std::make_unique<Block<void>>(block(context));
     }
     if(match({TokenType::IF})){
-        return if_statement();
+        return if_statement(context);
     }
     if(match({TokenType::WHILE})){
         return While_statement();
@@ -29,18 +29,23 @@ std::unique_ptr<Stmt<void>> Parser::statement()
     if(match({TokenType::FOR})){
         return For_statement();
     }
+    if(match({TokenType::BREAK})){
+        if(context.is_break_valid){
+            return Break_statement();
+        }
+        error(previous(), "break statement used outside of loop body\n");
+    }
     return expression_statement();
 }
 
-std::unique_ptr<Stmt<void>> Parser::if_statement(){
+std::unique_ptr<Stmt<void>> Parser::if_statement(ParseContext context){
     consume(TokenType::LEFT_PAREN, "Expect '(' after if");
     std::unique_ptr<Expr<Object>> condition {expression()};
     consume(TokenType::RIGHT_PAREN, "Expect ')' after if condition");
-
-    std::unique_ptr<Stmt<void>> then_branch {statement()};
+    std::unique_ptr<Stmt<void>> then_branch {statement(context)};
     std::unique_ptr<Stmt<void>> else_branch {};
     if(match({TokenType::ELSE})){
-        else_branch = statement();
+        else_branch = statement(context);
     }
     return std::make_unique<If<void>>(std::move(condition), std::move(then_branch), std::move(else_branch));
 }
@@ -50,7 +55,12 @@ std::unique_ptr<Stmt<void>> Parser::While_statement()
     consume(TokenType::LEFT_PAREN, "Expect '(' after while.");
     std::unique_ptr<Expr<Object>> condition {expression()};
     consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
-    std::unique_ptr<Stmt<void>> body {statement()};
+
+    if(check(TokenType::BREAK)){
+        error(peek(), "break statement used outside of loop body\n");
+    }
+
+    std::unique_ptr<Stmt<void>> body {statement(ParseContext{.is_break_valid=true})};
     return std::make_unique<While<void>>(std::move(condition), std::move(body));
 }
 
@@ -82,7 +92,8 @@ std::unique_ptr<Stmt<void>> Parser::For_statement()
     }
     consume(TokenType::RIGHT_PAREN, "Expect ')' after for clauses");
 
-    std::unique_ptr<Stmt<void>> body {statement()};
+
+    std::unique_ptr<Stmt<void>> body {statement(ParseContext{.is_break_valid=true})};
 
     if(incr){
         std::vector<std::unique_ptr<Stmt<void>>> loop_body;
@@ -105,6 +116,12 @@ std::unique_ptr<Stmt<void>> Parser::For_statement()
     return body;
 }
 
+std::unique_ptr<Stmt<void>> Parser::Break_statement()
+{
+    consume(TokenType::SEMICOLON, "Expect ';' after break\n");
+    return std::make_unique<Break<void>>();
+}
+
 std::unique_ptr<Stmt<void>> Parser::print_statement()
 {
     std::unique_ptr<Expr<Object>> value {expression()};
@@ -119,14 +136,14 @@ std::unique_ptr<Stmt<void>> Parser::expression_statement()
     return std::make_unique<Expression<void>>(std::move(value));
 }
 
-std::unique_ptr<Stmt<void>> Parser::declaration()
+std::unique_ptr<Stmt<void>> Parser::declaration(ParseContext context)
 {
     try {
 
         if(match({TokenType::VAR})){
             return var_declaration();
         }
-        return statement();
+        return statement(context);
 
     } catch (ParseError& error) {
         synchronize();
@@ -149,11 +166,11 @@ std::unique_ptr<Stmt<void>> Parser::var_declaration()
     return std::make_unique<Var<void>>(name, std::move(initializer));
 }
 
-std::vector<std::unique_ptr<Stmt<void>>> Parser::block()
+std::vector<std::unique_ptr<Stmt<void>>> Parser::block(ParseContext context)
 {
     std::vector<std::unique_ptr<Stmt<void>>> statements;
     while(!check(TokenType::RIGHT_BRACE) && !is_at_end()){
-        statements.push_back(declaration());
+        statements.push_back(declaration(context));
     }
     consume(TokenType::RIGHT_BRACE, "Expect '}' after block\n");
     return statements;
@@ -371,7 +388,7 @@ std::vector<std::unique_ptr<Stmt<void>>> Parser::parse()
 
     std::vector<std::unique_ptr<Stmt<void>>> statements;
     while(!is_at_end()){
-        statements.push_back(declaration());
+        statements.push_back(declaration(ParseContext{.is_break_valid=false}));
     }
     return statements;
 }

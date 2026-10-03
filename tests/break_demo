@@ -1,0 +1,37 @@
+var i=0;
+while(true){
+	print "Before break";
+	break;
+	print "After break";
+}
+
+while(i<10){
+	if(i>5){
+		break;
+	}
+	else{
+		print i;
+	}
+	i=i+1;
+}
+
+var j=0;
+var k=0;
+var str;
+while(j<10){
+	k=0;
+	print "j=";
+	print j;
+	while(k<5){
+		if(j>5){
+			break;
+		}
+		print "k=";
+		print k;
+		k=k+1;
+	}
+	j=j+1;
+}
+
+
+

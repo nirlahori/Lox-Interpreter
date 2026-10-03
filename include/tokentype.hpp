@@ -36,6 +36,7 @@ enum class TokenType : std::uint8_t{
 
     //Keywords
     AND,
+    BREAK,
     CLASS,
     ELSE,
     FALSE,

@@ -2,6 +2,8 @@
 #include <iostream>
 #include <list>
 #include <iostream>
+#include <format>
+#include <cstdlib>
 
 #include "lox.hpp"
 #include "scanner.hpp"
@@ -16,7 +18,7 @@ Lox::Lox() :
 
 void Lox::report(int line, std::string_view where, std::string_view msg)
 {
-    std::printf("[line \" %d \" Error %s \": \" %s", line, where.data(), msg.data());
+    std::cout << std::format("[line {}] Error {}: {}\n", line, where, msg);
     had_error = true;
 }
 
@@ -37,7 +39,7 @@ void Lox::error(Token token, std::string msg)
 
 void Lox::runtime_error(RuntimeError error)
 {
-    std::cout << error.what() << "\n" << "[line " << error.get_token().get_line() << "]";
+    std::cout << std::format("{} [line {}]\n", error.what(), error.get_token().get_line());
     had_runtime_error = true;
 }
 
@@ -47,15 +49,10 @@ void Lox::run(std::string source)
     std::list<Token> tokens {scn.scan_tokens()};
     Parser parser(tokens);
     std::vector<std::unique_ptr<Stmt<void>>> statements {parser.parse()};
-    interpreter.interpret(std::move(statements));
-
     if(had_error){
         return;
     }
-
-    if(had_runtime_error){
-        std::exit(70);
-    }
+    interpreter.interpret(std::move(statements));
 }
 
 void Lox::run_file(std::string_view path)
@@ -78,7 +75,11 @@ void Lox::run_file(std::string_view path)
     run(input);
 
     if (had_error) {
-        std::terminate();
+        std::exit(EXIT_FAILURE);
+    }
+
+    if(had_runtime_error){
+        std::exit(70);
     }
 }
 

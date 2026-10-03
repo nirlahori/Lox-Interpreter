@@ -1,0 +1,43 @@
+var i=10;
+print i / t;
+
+if(i > 5){
+	i = i + 1;
+	var j = i;
+	break;
+}
+
+var j = 100;
+var k = j + 1;
+if(j == k){
+	print j;	
+}
+else{
+	break;
+}
+
+var p = 5;
+while(p < 50) break; {
+	print "p: ";
+	print p;
+	p = p + 5;
+}
+
+var h = 3;
+while(j < 30){
+	if(h < 18){
+		print h;
+		h = h + 3;
+	}
+	else{
+		break;
+	}
+}
+
+
+for(var p=0; p<10; p=p+1){
+	if(p == 5){
+		break;
+	}
+	print p;
+}

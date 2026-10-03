@@ -82,6 +82,11 @@ void Interpreter::visit(While<void> *whilestmt)
 {
     while(is_truthy(evaluate(whilestmt->condition.get()))){
         execute(whilestmt->body.get());
+        // If block is exited due to break, then break out of the while loop, otherwise continue
+        if(is_break_active){
+            is_break_active = false;
+            break;
+        }
     }
 }
 
@@ -132,14 +137,14 @@ bool Interpreter::is_equal(const Object &left, const Object &right)
 void Interpreter::check_number_operand(Token opr, const Object &operand)
 {
     if(operand.underlying_type() != "double"){
-        throw RuntimeError(opr, "Operand must be a number\n");
+        throw RuntimeError(opr, "Operand must be a number");
     }
 }
 
 void Interpreter::check_number_operand(Token opr, const Object &left, const Object &right)
 {
     if(left.underlying_type() != "double" || right.underlying_type() != "double"){
-        throw RuntimeError(opr, "Operands must be numbers\n");
+        throw RuntimeError(opr, "Operands must be numbers");
     }
 }
 
@@ -170,7 +175,15 @@ void Interpreter::execute_block(const std::vector<std::unique_ptr<Stmt<void>>>& 
     try{
         this->environment = &env;
         for(const std::unique_ptr<Stmt<void>>& stmt : statements){
+            if(is_break_active){
+                break;
+            }
             if(stmt){
+                auto* ptr = stmt.get();
+                if(stmt_table[std::type_index(typeid(*ptr))] == "Break<void>"){
+                    is_break_active = true;
+                    break;
+                }
                 execute(stmt.get());
             }
         }
@@ -222,7 +235,7 @@ Object Interpreter::visit(Binary<Object>* bin)
                 return static_cast<std::string>(left) + static_cast<std::string>(right);
             }
             else{
-                throw RuntimeError(bin->opr, "Double or String expected\n");
+                throw RuntimeError(bin->opr, "Double or String expected");
             }
         case TokenType::BANG_EQUAL:
             return !is_equal(left, right);

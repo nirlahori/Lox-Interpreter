@@ -15,22 +15,28 @@ class Parser
 {
 
     struct ParseError : std::exception{};
+    struct ParseContext{
+        bool is_break_valid;
+    };
 
 
     std::list<Token> tokens;
     std::list<Token>::iterator current;
+    bool is_loop_body {false};
+    bool is_block {false};
 
 
     std::unique_ptr<Expr<Object>>              expression();
-    std::unique_ptr<Stmt<void>>                statement();
+    std::unique_ptr<Stmt<void>>                statement(ParseContext context);
     std::unique_ptr<Stmt<void>>                print_statement();
     std::unique_ptr<Stmt<void>>                expression_statement();
-    std::unique_ptr<Stmt<void>>                declaration();
+    std::unique_ptr<Stmt<void>>                declaration(ParseContext context);
     std::unique_ptr<Stmt<void>>                var_declaration();
-    std::vector<std::unique_ptr<Stmt<void>>>   block();
-    std::unique_ptr<Stmt<void>>                if_statement();
+    std::vector<std::unique_ptr<Stmt<void>>>   block(ParseContext context);
+    std::unique_ptr<Stmt<void>>                if_statement(ParseContext context);
     std::unique_ptr<Stmt<void>>                While_statement();
     std::unique_ptr<Stmt<void>>                For_statement();
+    std::unique_ptr<Stmt<void>>                Break_statement();
     std::unique_ptr<Expr<Object>>              assignment();
     std::unique_ptr<Expr<Object>>              equality();
     std::unique_ptr<Expr<Object>>              comparison();
