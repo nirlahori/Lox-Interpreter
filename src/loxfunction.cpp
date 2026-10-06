@@ -36,11 +36,3 @@ std::string LoxFunction::to_string()
 {
     return "<fn " + decl->name.get_lexeme() + ">";
 }
-
-/*
-void LoxFunction::set_closure(std::optional<Environment> _closure)
-{
-    closure = _closure;
-}
-*/
-

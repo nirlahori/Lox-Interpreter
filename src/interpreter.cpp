@@ -83,7 +83,6 @@ void Interpreter::visit(Var<void> *var)
 
 void Interpreter::visit(Block<void> *blk)
 {
-//    Environment env (environment);
     Environment* env {create_environment(environment)};
     execute_block(blk->statements, *env);
 }
