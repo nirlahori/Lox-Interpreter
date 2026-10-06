@@ -2,6 +2,7 @@
 #define INTERPRETER_HPP
 
 #include <vector>
+#include <memory>
 
 #include "object.hpp"
 #include "visitor.hpp"
@@ -24,6 +25,8 @@ class Interpreter : public Visitor<Object>, public Stmt<void>::Visitor
 
     Environment globals;
     Environment* environment {&globals};
+
+    std::vector<std::unique_ptr<Environment>> envvec;
 
 
 public:
@@ -52,8 +55,7 @@ public:
     void interpret(std::vector<std::unique_ptr<Stmt<void>>> statements);
     Environment* get_global_environment();
     void execute_block(const std::vector<std::unique_ptr<Stmt<void>>>&, Environment&);
-
-
+    Environment* create_environment(Environment*);
 
 };
 

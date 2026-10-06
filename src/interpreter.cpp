@@ -6,7 +6,6 @@
 
 #include "lox.hpp"
 #include <iostream>
-#include <optional>
 
 Interpreter::Interpreter() = default;
 
@@ -84,8 +83,9 @@ void Interpreter::visit(Var<void> *var)
 
 void Interpreter::visit(Block<void> *blk)
 {
-    Environment env (environment);
-    execute_block(blk->statements, env);
+//    Environment env (environment);
+    Environment* env {create_environment(environment)};
+    execute_block(blk->statements, *env);
 }
 
 void Interpreter::visit(If<void> *ifstmt)
@@ -108,13 +108,7 @@ void Interpreter::visit(While<void> *whilestmt)
 
 void Interpreter::visit(Function<void> *fun)
 {
-    LoxFunction function {fun};
-    if(environment == get_global_environment()){
-        function.set_closure(std::nullopt);
-    }
-    else{
-        function.set_closure(*environment);
-    }
+    LoxFunction function {fun, environment};
     environment->define_name(fun->name.get_lexeme(), function);
 }
 
@@ -232,6 +226,12 @@ void Interpreter::execute_block(const std::vector<std::unique_ptr<Stmt<void>>>& 
     // If exception gets thrown then the previous environment won't get restored and the program
     // will become ill-formed
     this->environment = previous;
+}
+
+Environment* Interpreter::create_environment(Environment* enclosing)
+{
+    envvec.push_back(std::make_unique<Environment>(enclosing));
+    return envvec.back().get();
 }
 
 Interpreter::Interpreter(Environment *env) :
