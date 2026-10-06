@@ -42,7 +42,7 @@ public:
     void visit(Block<void>* blk);
     void visit(If<void>* ifstmt);
     void visit(While<void>* whilestmt);
-    void visit(Break<void>*) {}
+    void visit(Break<void>*);
     void interpret(std::vector<std::unique_ptr<Stmt<void>>> statements);
 };
 

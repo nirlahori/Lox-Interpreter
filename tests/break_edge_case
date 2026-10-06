@@ -1,0 +1,7 @@
+while(true) break;
+{
+	var i=99;
+	print i;
+}
+
+print "Hello";

@@ -90,6 +90,11 @@ void Interpreter::visit(While<void> *whilestmt)
     }
 }
 
+void Interpreter::visit(Break<void> *)
+{
+    is_break_active = true;
+}
+
 void Interpreter::interpret(std::vector<std::unique_ptr<Stmt<void>>> statements)
 {
     try {
@@ -179,11 +184,6 @@ void Interpreter::execute_block(const std::vector<std::unique_ptr<Stmt<void>>>& 
                 break;
             }
             if(stmt){
-                auto* ptr = stmt.get();
-                if(stmt_table[std::type_index(typeid(*ptr))] == "Break<void>"){
-                    is_break_active = true;
-                    break;
-                }
                 execute(stmt.get());
             }
         }

@@ -22,9 +22,6 @@ class Parser
 
     std::list<Token> tokens;
     std::list<Token>::iterator current;
-    bool is_loop_body {false};
-    bool is_block {false};
-
 
     std::unique_ptr<Expr<Object>>              expression();
     std::unique_ptr<Stmt<void>>                statement(ParseContext context);

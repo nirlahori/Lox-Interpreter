@@ -170,9 +170,4 @@ struct Break : Stmt<void>
     }
 };
 
-
-static std::map<std::type_index, std::string> stmt_table {
-    {std::type_index(typeid(Break<void>)), "Break<void>"}
-};
-
 #endif // STMT_HPP

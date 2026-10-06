@@ -55,11 +55,6 @@ std::unique_ptr<Stmt<void>> Parser::While_statement()
     consume(TokenType::LEFT_PAREN, "Expect '(' after while.");
     std::unique_ptr<Expr<Object>> condition {expression()};
     consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
-
-    if(check(TokenType::BREAK)){
-        error(peek(), "break statement used outside of loop body\n");
-    }
-
     std::unique_ptr<Stmt<void>> body {statement(ParseContext{.is_break_valid=true})};
     return std::make_unique<While<void>>(std::move(condition), std::move(body));
 }
