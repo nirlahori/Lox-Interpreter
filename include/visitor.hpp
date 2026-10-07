@@ -26,6 +26,10 @@ template<typename T>
 struct Call;
 
 template<typename T>
+struct Lambda;
+
+
+template<typename T>
 struct Visitor{
 
     virtual T visit(Binary<T>*) = 0;
@@ -36,6 +40,7 @@ struct Visitor{
     virtual T visit(Assign<T>*) = 0;
     virtual T visit(Logical<T>*) = 0;
     virtual T visit(Call<T>*) = 0;
+    virtual T visit(Lambda<T>*) = 0;
 };
 
 #endif // VISITOR_HPP

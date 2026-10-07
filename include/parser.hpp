@@ -42,18 +42,21 @@ class Parser
     std::unique_ptr<Expr<Object>>              logical_or();
     std::unique_ptr<Expr<Object>>              logical_and();
     std::unique_ptr<Expr<Object>>              call();
+    std::unique_ptr<Expr<Object>>              lambda();
 
 
     bool match(const std::vector<TokenType>& tokens);
     bool check(TokenType type);
+    bool check_next(TokenType type);
     Token advance();
     Token previous();
     bool is_at_end();
     Token peek();
-
     Token consume(TokenType type, std::string msg);
     ParseError error(Token type, std::string msg);
     void synchronize();
+    std::vector<Token> parse_function_parameters(std::string_view);
+    std::vector<std::unique_ptr<Stmt<void>>> parse_function_body(std::string_view);
 
 
 

@@ -7,7 +7,7 @@
 
 class  LoxFunction;
 struct LoxCallable;
-
+struct LoxLambda;
 
 class Object{
 
@@ -45,7 +45,7 @@ private:
                 return data;
             }
             else{
-                if constexpr(std::is_same_v<LoxFunction, ObjectType>){
+                if constexpr(std::is_same_v<LoxFunction, ObjectType> || std::is_same_v<LoxLambda, ObjectType>){
                     return data.to_string();
                 }
                 else{
@@ -66,6 +66,9 @@ private:
             }
             else if(std::is_same<ObjectType, LoxFunction>::value){
                 return "lox_function";
+            }
+            else if(std::is_same<ObjectType, LoxLambda>::value){
+                return "lox_lambda";
             }
         }
 

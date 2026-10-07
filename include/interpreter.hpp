@@ -41,6 +41,7 @@ public:
     Object visit(Assign<Object>* asgn);
     Object visit(Logical<Object>* log);
     Object visit(Call<Object>* call);
+    Object visit(Lambda<Object>* lam);
 
     void visit(Expression<void>* expr);
     void visit(Print<void>* prt);

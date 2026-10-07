@@ -9,6 +9,9 @@ Parser::Parser() = default;
 
 std::unique_ptr<Expr<Object>> Parser::expression()
 {
+    if(match({TokenType::FUN})){
+        return lambda();
+    }
     return assignment();
 }
 
@@ -111,20 +114,8 @@ std::unique_ptr<Stmt<void>> Parser::For_statement()
 std::unique_ptr<Stmt<void>> Parser::function(std::string_view kind)
 {
     Token name {consume(TokenType::IDENTIFIER, "Expect " + std::string(kind) + " name\n")};
-    consume(TokenType::LEFT_PAREN, "Expect '(' after " + std::string(kind) + " name\n");
-    std::vector<Token> parameters;
-    if(!check(TokenType::RIGHT_PAREN)){
-        do{
-            if(parameters.size() >= 255){
-                error(peek(), "Can't have more than 255 parameters\n");
-            }
-            parameters.push_back(consume(TokenType::IDENTIFIER, "Expect parameter name\n"));
-        }
-        while(match({TokenType::COMMA}));
-    }
-    consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters\n");
-    consume(TokenType::LEFT_BRACE, "Expect '{' before " + std::string(kind) + " body\n");
-    std::vector<std::unique_ptr<Stmt<void>>> body {block()};
+    std::vector<Token> parameters {parse_function_parameters(kind)};
+    std::vector<std::unique_ptr<Stmt<void>>> body {parse_function_body(kind)};
     return std::make_unique<Function<void>>(name, std::move(parameters), std::move(body));
 }
 
@@ -156,8 +147,11 @@ std::unique_ptr<Stmt<void>> Parser::expression_statement()
 std::unique_ptr<Stmt<void>> Parser::declaration()
 {
     try {
-        if(match({TokenType::FUN})){
-            return function("function");
+        if(check(TokenType::FUN)){
+            if(!check_next(TokenType::LEFT_PAREN)){
+                advance(); // Need to advance the token manually as function() doesn't starts with a TokenType::FUN
+                return function("function");
+            }
         }
         if(match({TokenType::VAR})){
             return var_declaration();
@@ -330,12 +324,28 @@ std::unique_ptr<Expr<Object>> Parser::call()
     }
     return expr;
 }
+
+std::unique_ptr<Expr<Object>> Parser::lambda()
+{
+    std::vector<Token> params {parse_function_parameters("Lambda")};
+    std::vector<std::unique_ptr<Stmt<void>>> body {parse_function_body("Lambda")};
+    return std::make_unique<Lambda<Object>>(std::move(params), std::move(body));
+}
+
 bool Parser::check(TokenType type)
 {
     if(is_at_end()){
         return false;
     }
     return peek().get_type() == type;
+}
+
+bool Parser::check_next(TokenType type)
+{
+    if(is_at_end()){
+        return false;
+    }
+    return (*std::next(current)).get_type() == type;
 }
 
 Token Parser::advance()
@@ -391,6 +401,29 @@ void Parser::synchronize()
 
         advance();
     }
+}
+
+std::vector<Token> Parser::parse_function_parameters(std::string_view kind)
+{
+    consume(TokenType::LEFT_PAREN, "Expect '(' after " + std::string(kind) + " name\n");
+    std::vector<Token> parameters;
+    if(!check(TokenType::RIGHT_PAREN)){
+        do{
+            if(parameters.size() >= 255){
+                error(peek(), "Can't have more than 255 parameters\n");
+            }
+            parameters.push_back(consume(TokenType::IDENTIFIER, "Expect parameter name\n"));
+        }
+        while(match({TokenType::COMMA}));
+    }
+    consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters\n");
+    return parameters;
+}
+
+std::vector<std::unique_ptr<Stmt<void>>> Parser::parse_function_body(std::string_view kind)
+{
+    consume(TokenType::LEFT_BRACE, "Expect '{' before " + std::string(kind) + " body\n");
+    return block();
 }
 
 Parser::ParseError Parser::error(Token type, std::string msg)

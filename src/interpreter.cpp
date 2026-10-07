@@ -3,6 +3,7 @@
 #include "loxcallable.hpp"
 #include "loxfunction.hpp"
 #include "returnvalue.hpp"
+#include "loxlambda.hpp"
 
 #include "lox.hpp"
 #include <iostream>
@@ -59,6 +60,12 @@ Object Interpreter::visit(Call<Object> *call)
         throw RuntimeError(call->paren, "Expected " + std::to_string(function->arity()) + " arguments but got " + std::to_string(arguments.size()));
     }
     return function->call(this, std::move(arguments));
+}
+
+Object Interpreter::visit(Lambda<Object> *lam)
+{
+    LoxLambda func{lam, environment};
+    return Object{func};
 }
 
 void Interpreter::visit(Expression<void> *stmt)

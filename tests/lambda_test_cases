@@ -1,0 +1,34 @@
+
+fun fun_takes_fun(val, add_func){
+	return add_func(val);
+}
+
+print fun_takes_fun(10, fun (a) { 
+	return a + 1; 
+});
+
+
+
+var add = fun (a, b) { 
+	return a + b; 
+};
+print add(1, 2);
+
+
+fun makeAdder(x) {
+  return fun (y) { return x + y; };
+}
+var addFive = makeAdder(5);
+print addFive(3); // should print 8
+
+
+fun (a) { print a; };
+
+fun greet(display){
+	display();
+}
+
+greet(fun () { 
+	print "hi"; 
+});
+

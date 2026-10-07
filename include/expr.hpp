@@ -9,6 +9,9 @@
 #include "token.hpp"
 #include "visitor.hpp"
 
+template<typename T>
+struct Stmt;
+
 
 template<typename T>
 struct Expr{
@@ -152,6 +155,25 @@ struct Call : Expr<T>
         callee{std::move(_callee)},
         paren{_paren},
         arguments{std::move(_arguments)}
+    {}
+
+    T accept(Visitor<T>* visitor){
+        return visitor->visit(this);
+    }
+};
+
+
+template <typename T>
+struct Lambda : Expr<T>
+{
+    std::vector<Token> params;
+    std::vector<std::unique_ptr<Stmt<void>>> body;
+
+    Lambda() = default;
+
+    Lambda(std::vector<Token> _params, std::vector<std::unique_ptr<Stmt<void>>> _body) :
+        params{std::move(_params)},
+        body{std::move(_body)}
     {}
 
     T accept(Visitor<T>* visitor){

@@ -25,6 +25,7 @@ add_executable(Lox_Interpreter src/main.cpp
 
     src/object.cpp
     include/returnvalue.hpp
+    include/loxlambda.hpp src/loxlambda.cpp
 
 )
 
