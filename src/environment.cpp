@@ -40,3 +40,22 @@ void Environment::assign(Token name, const Object &value)
     }
 }
 
+Object Environment::get_at(int distance, std::string name)
+{
+    return ancestor(distance)->values.at(name);
+}
+
+void Environment::assign_at(int distance, Token name, const Object &value)
+{
+    ancestor(distance)->values[name.get_lexeme()] = value;
+}
+
+Environment* Environment::ancestor(int distance)
+{
+    Environment* env {this};
+    for(int i{0}; i<distance; i++){
+        env = env->enclosing;
+    }
+    return env;
+}
+

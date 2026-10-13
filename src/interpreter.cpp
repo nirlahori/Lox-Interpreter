@@ -17,13 +17,22 @@ Object Interpreter::visit(Literal<Object>* lit)
 
 Object Interpreter::visit(Variable<Object> *var)
 {
-    return environment->get(var->name);
+    return look_up_variable(var->name, var);
+    //return environment->get(var->name);
 }
 
 Object Interpreter::visit(Assign<Object> *asgn)
 {
     Object value {evaluate(asgn->value.get())};
-    environment->assign(asgn->name, value);
+    int distance {};
+    try{
+        distance = locals.at(asgn);
+    }
+    catch(std::out_of_range& ex){
+        globals.assign(asgn->name, value);
+    }
+    //environment->assign(asgn->name, value);
+    environment->assign_at(distance, asgn->name, value);
     return value;
 }
 
@@ -204,6 +213,18 @@ void Interpreter::execute(Stmt<void>* stmt)
     stmt->accept(this);
 }
 
+Object Interpreter::look_up_variable(Token name, Expr<Object>* expr)
+{
+    int distance {};
+    try{
+        distance = locals.at(expr);
+    }
+    catch(std::out_of_range& ex){
+        return globals.get(name);
+    }
+    return environment->get_at(distance, name.get_lexeme());
+}
+
 void Interpreter::execute_block(const std::vector<std::unique_ptr<Stmt<void>>>& statements, Environment& env)
 {
     Environment* previous = environment;
@@ -231,6 +252,11 @@ Environment* Interpreter::create_environment(Environment* enclosing)
 {
     envvec.push_back(std::make_unique<Environment>(enclosing));
     return envvec.back().get();
+}
+
+void Interpreter::resolve(Expr<Object>* expr, int depth)
+{
+    locals.insert({reinterpret_cast<Expr<Object>*>(expr), depth});
 }
 
 Interpreter::Interpreter(Environment *env) :

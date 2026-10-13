@@ -5,6 +5,7 @@
 #include "lox.hpp"
 #include "scanner.hpp"
 #include "parser.hpp"
+#include "resolver.hpp"
 
 bool Lox::had_error = false;
 bool Lox::had_runtime_error = false;
@@ -47,11 +48,19 @@ void Lox::run(std::string source)
     std::list<Token> tokens {scn.scan_tokens()};
     Parser parser(tokens);
     std::vector<std::unique_ptr<Stmt<void>>> statements {parser.parse()};
-    interpreter.interpret(std::move(statements));
 
     if(had_error){
         return;
     }
+
+    Resolver resolver {&interpreter};
+    resolver.resolve(statements);
+    if(had_error){
+        return;
+    }
+
+    interpreter.interpret(std::move(statements));
+
 
     if(had_runtime_error){
         std::exit(70);

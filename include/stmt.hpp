@@ -3,8 +3,6 @@
 
 #include <memory>
 #include <vector>
-#include <map>
-#include <typeindex>
 #include "expr.hpp"
 #include "token.hpp"
 

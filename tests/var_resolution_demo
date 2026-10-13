@@ -1,0 +1,18 @@
+print "declaring a";
+var a = "global";
+print "a declared";
+{
+  print "declaring showA";
+  fun showA() {
+    print a;
+  }
+  print "declared showA";
+  print "calling showA";
+  showA();
+  print "called showA";
+  print "assigning a";
+  var a = "block";
+  print "assigned a";
+  showA();
+  print "called showA again";
+}

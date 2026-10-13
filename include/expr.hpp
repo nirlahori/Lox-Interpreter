@@ -9,12 +9,47 @@
 #include "token.hpp"
 #include "visitor.hpp"
 
+template<typename T>
+struct Binary;
+
+template<typename T>
+struct Unary;
+
+template<typename T>
+struct Grouping;
+
+template<typename T>
+struct Literal;
+
+template<typename T>
+struct Variable;
+
+template<typename T>
+struct Assign;
+
+template<typename T>
+struct Logical;
+
+template<typename T>
+struct Call;
 
 template<typename T>
 struct Expr{
 
+    struct Visitor{
+
+        virtual T visit(Binary<T>*) = 0;
+        virtual T visit(Unary<T>*) = 0;
+        virtual T visit(Grouping<T>*) = 0;
+        virtual T visit(Literal<T>*) = 0;
+        virtual T visit(Variable<T>*) = 0;
+        virtual T visit(Assign<T>*) = 0;
+        virtual T visit(Logical<T>*) = 0;
+        virtual T visit(Call<T>*) = 0;
+    };
+
     Expr() = default;
-    virtual T accept(Visitor<T>* visitor) = 0;
+    virtual T accept(Expr<T>::Visitor* visitor) = 0;
     virtual ~Expr() = default;
 };
 
@@ -32,7 +67,7 @@ struct Binary : Expr<T>{
     {}
 
 
-    T accept(Visitor<T>* visitor){
+    T accept(Expr<T>::Visitor* visitor){
         return visitor->visit(this);
     }
 };
@@ -50,7 +85,7 @@ struct Unary : Expr<T>{
         right{std::move(_right)}
     {}
 
-    T accept(Visitor<T>* visitor){
+    T accept(Expr<T>::Visitor* visitor){
         return visitor->visit(this);
     }
 };
@@ -65,7 +100,7 @@ struct Grouping : Expr<T>{
         expression{std::move(_expression)}
         {}
 
-    T accept(Visitor<T>* visitor){
+    T accept(Expr<T>::Visitor* visitor){
         return visitor->visit(this);
     }
 };
@@ -80,7 +115,7 @@ struct Literal : Expr<T>{
         value{std::move(_value)}
     {}
 
-    T accept(Visitor<T>* visitor){
+    T accept(Expr<T>::Visitor* visitor){
         return visitor->visit(this);
     }
 };
@@ -96,7 +131,7 @@ struct Variable : Expr<T>{
         name{_name}
         {}
 
-    T accept(Visitor<T>* visitor){
+    T accept(Expr<T>::Visitor* visitor){
         return visitor->visit(this);
     }
 };
@@ -116,7 +151,7 @@ struct Assign : Expr<T>{
         value{std::move(_value)}
         {}
 
-    T accept(Visitor<T>* visitor){
+    T accept(Expr<T>::Visitor* visitor){
         return visitor->visit(this);
     }
 };
@@ -135,7 +170,7 @@ struct Logical : Expr<T>
         right{std::move(_right)}
     {}
 
-    T accept(Visitor<T>* visitor){
+    T accept(Expr<T>::Visitor* visitor){
         return visitor->visit(this);
     }
 };
@@ -154,7 +189,7 @@ struct Call : Expr<T>
         arguments{std::move(_arguments)}
     {}
 
-    T accept(Visitor<T>* visitor){
+    T accept(Expr<T>::Visitor* visitor){
         return visitor->visit(this);
     }
 };

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 #include "object.hpp"
 #include "visitor.hpp"
@@ -10,7 +11,7 @@
 #include "stmt.hpp"
 #include "environment.hpp"
 
-class Interpreter : public Visitor<Object>, public Stmt<void>::Visitor
+class Interpreter : public Expr<Object>::Visitor, public Stmt<void>::Visitor
 {
 
     Object evaluate(Expr<Object>* expr);
@@ -21,12 +22,14 @@ class Interpreter : public Visitor<Object>, public Stmt<void>::Visitor
     std::string stringify(Object obj);
 
     void execute(Stmt<void>* stmt);
+    Object look_up_variable(Token, Expr<Object>*);
 
 
     Environment globals;
     Environment* environment {&globals};
 
     std::vector<std::unique_ptr<Environment>> envvec;
+    std::unordered_map<Expr<Object>*, int> locals;
 
 
 public:
@@ -56,6 +59,7 @@ public:
     Environment* get_global_environment();
     void execute_block(const std::vector<std::unique_ptr<Stmt<void>>>&, Environment&);
     Environment* create_environment(Environment*);
+    void resolve(Expr<Object>*, int);
 
 };
 
