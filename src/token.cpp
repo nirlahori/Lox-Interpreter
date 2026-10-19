@@ -14,7 +14,7 @@ std::ostream& operator<< (std::ostream& os, const Token& tok){
     return os;
 }
 
-std::string Token::get_lexeme(){
+std::string Token::get_lexeme() const{
     return lexeme;
 }
 

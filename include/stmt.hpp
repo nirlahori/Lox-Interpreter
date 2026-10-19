@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <typeindex>
 #include "expr.hpp"
 #include "token.hpp"
 
@@ -199,5 +200,17 @@ struct Return : Stmt<void>
     }
 };
 
+
+static std::unordered_map<std::type_index, std::string> stmt_table {
+    {std::type_index(typeid(Stmt<void>)),       "Stmt<void>"},
+    {std::type_index(typeid(Expression<void>)), "Expression<void>"},
+    {std::type_index(typeid(Print<void>)),      "Print<void>"},
+    {std::type_index(typeid(Var<void>)),        "Var<void>"},
+    {std::type_index(typeid(Block<void>)),      "Block<void>"},
+    {std::type_index(typeid(If<void>)),         "If<void>"},
+    {std::type_index(typeid(While<void>)),      "While<void>"},
+    {std::type_index(typeid(Function<void>)),   "Function<void>"},
+    {std::type_index(typeid(Return<void>)),     "Return<void>"}
+};
 
 #endif // STMT_HPP

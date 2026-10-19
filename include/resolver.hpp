@@ -18,9 +18,14 @@ enum class FunctionType{
 };
 
 
+struct variable_stat{
+    int usage {};
+};
+
 class Resolver : public Expr<Object>::Visitor, public Stmt<void>::Visitor
 {
     std::vector<std::unordered_map<std::string, bool>> scopes;
+    std::vector<std::unordered_map<std::string, variable_stat>> scoped_variable_info_table;
 
     Interpreter* interpreter;
     FunctionType current_function {FunctionType::none};
@@ -30,12 +35,19 @@ class Resolver : public Expr<Object>::Visitor, public Stmt<void>::Visitor
 
     void begin_scope();
     void end_scope();
+    void end_scope(const std::vector<std::unique_ptr<Stmt<void>>>&);
     void declare(Token name);
     void define(Token name);
+
+
+
     void resolve_local(Expr<Object>*, Token);
-    int get_index(std::vector<std::unordered_map<std::string, bool>>::const_reverse_iterator);
+    int  get_index(std::vector<std::unordered_map<std::string, bool>>::const_reverse_iterator);
     void resolve_function(Function<void>*, FunctionType);
 
+    void check_unused_declarations(const std::vector<std::unique_ptr<Stmt<void>>>&);
+    void check_local_variables(const std::vector<std::unique_ptr<Stmt<void>>>&);
+    void check_local_variable(const std::unordered_map<std::string, variable_stat>&, const Var<void>*);
 
 public:
 
@@ -48,9 +60,7 @@ public:
     Object visit(Binary<Object>*);
     Object visit(Call<Object>*);
     Object visit(Grouping<Object>*);
-    Object visit(Literal<Object>*){
-        return nullptr;
-    }
+    Object visit(Literal<Object>*);
     Object visit(Logical<Object>*);
     Object visit(Unary<Object>*);
 

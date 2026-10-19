@@ -22,7 +22,7 @@ public:
     Token() = default;
     Token(TokenType _type, std::string_view _lexeme, Object _literal, const int& _line);
 
-    std::string get_lexeme();
+    std::string get_lexeme() const;
     const Object& get_value();
     TokenType get_type();
     int get_line();

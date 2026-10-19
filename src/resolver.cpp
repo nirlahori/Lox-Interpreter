@@ -2,7 +2,7 @@
 #include <iterator>
 #include "resolver.hpp"
 #include "lox.hpp"
-
+#include "stmt.hpp"
 
 Resolver::Resolver() = default;
 
@@ -26,22 +26,33 @@ void Resolver::resolve(const std::unique_ptr<Expr<Object>>& expr)
 
 void Resolver::begin_scope()
 {
+    scoped_variable_info_table.push_back(std::unordered_map<std::string, variable_stat>{});
     scopes.push_back(std::unordered_map<std::string, bool>{});
 }
 
 void Resolver::end_scope()
 {
+    scoped_variable_info_table.pop_back();
     scopes.pop_back();
+}
+
+void Resolver::end_scope(const std::vector<std::unique_ptr<Stmt<void>>>& stmts)
+{
+    check_unused_declarations(stmts);
+    end_scope();
 }
 
 void Resolver::declare(Token name)
 {
     if(!scopes.empty()){
-        std::unordered_map<std::string, bool> scope {scopes.back()};
+        std::unordered_map<std::string, bool>& scope {scopes.back()};
         if(scope.contains(name.get_lexeme())){
             Lox::error(name, "Already a variable with this name in this scope\n");
+            return;
         }
         scope.insert({name.get_lexeme(), false});
+        std::unordered_map<std::string, variable_stat>& current_local_variables {scoped_variable_info_table.back()};
+        current_local_variables.insert({name.get_lexeme(), variable_stat{.usage=0}});
     }
 }
 
@@ -63,11 +74,13 @@ void Resolver::resolve_local(Expr<Object>* expr, Token name)
     };
 
     auto iter = std::find_if(scopes.crbegin(), scopes.crend(), find_name);
+
     int index {get_index(iter)};
     if(index != -1){
         interpreter->resolve(expr, scopes.size() - 1 - index);
+        std::unordered_map<std::string, variable_stat>& variable_table {scoped_variable_info_table[index]};
+        variable_table[name.get_lexeme()].usage++;
     }
-
 }
 
 int Resolver::get_index(std::vector<std::unordered_map<std::string, bool>>::const_reverse_iterator iter)
@@ -95,8 +108,32 @@ void Resolver::resolve_function(Function<void>* func, FunctionType type)
         define(param);
     }
     resolve(func->body);
-    end_scope();
+    end_scope(func->body);
     current_function = enclosing_function;
+}
+
+void Resolver::check_unused_declarations(const std::vector<std::unique_ptr<Stmt<void>>>& stmts)
+{
+    check_local_variables(stmts);
+}
+
+void Resolver::check_local_variables(const std::vector<std::unique_ptr<Stmt<void>>>& stmts)
+{
+    std::unordered_map<std::string, variable_stat>& current_local_variables_table {scoped_variable_info_table.back()};
+    for(const auto& stmt : stmts){
+        auto ptr = stmt.get();
+        if(stmt_table[typeid(*ptr)] == "Var<void>"){
+            check_local_variable(current_local_variables_table, static_cast<Var<void>*>(stmt.get()));
+        }
+    }
+}
+
+void Resolver::check_local_variable(const std::unordered_map<std::string, variable_stat>& current_local_variables_table, const Var<void>* stmt)
+{
+    std::string var_name {stmt->name.get_lexeme()};
+    if(current_local_variables_table.contains(var_name) && current_local_variables_table.at(var_name).usage < 1){
+        Lox::error(stmt->name, "Unused local variable\n");
+    }
 }
 
 
@@ -148,6 +185,11 @@ Object Resolver::visit(Grouping<Object>* groupingexpr)
     return nullptr;
 }
 
+Object Resolver::visit(Literal<Object>*)
+{
+    return nullptr;
+}
+
 Object Resolver::visit(Logical<Object>* logicalexpr)
 {
     resolve(logicalexpr->left);
@@ -165,7 +207,7 @@ void Resolver::visit(Block<void>* block)
 {
     begin_scope();
     resolve(block->statements);
-    end_scope();
+    end_scope(block->statements);
 }
 
 void Resolver::visit(Var<void>* var)
