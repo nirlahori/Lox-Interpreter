@@ -1,5 +1,7 @@
 #include "loxfunction.hpp"
 #include "returnvalue.hpp"
+#include "loxinstance.hpp"
+#include "interpreter.hpp"
 
 LoxFunction::LoxFunction() = default;
 
@@ -12,6 +14,12 @@ LoxFunction::LoxFunction(Function<void>* _decl, Environment* _closure) :
     closure{_closure}
     {}
 
+LoxFunction::LoxFunction(Function<void> *_decl, Environment *_closure, bool _is_initializer) :
+    decl{_decl},
+    closure{_closure},
+    is_initializer{_is_initializer}
+    {}
+
 Object LoxFunction::call(Interpreter* intp, std::vector<Object> arguments)
 {
     Environment* env {intp->create_environment(closure)};
@@ -22,7 +30,7 @@ Object LoxFunction::call(Interpreter* intp, std::vector<Object> arguments)
         intp->execute_block(decl->body, *env);
     }
     catch(ReturnValue& rv){
-        return rv.value;
+        return is_initializer ? closure->get_at(0, "this") : rv.value;
     }
     return nullptr;
 }
@@ -35,4 +43,11 @@ std::size_t LoxFunction::arity()
 std::string LoxFunction::to_string()
 {
     return "<fn " + decl->name.get_lexeme() + ">";
+}
+
+LoxFunction LoxFunction::bind(Interpreter* intp, LoxInstance& instance)
+{
+    Environment* environment {intp->create_environment(closure)};
+    environment->define_name("this", instance);
+    return LoxFunction(decl, environment, is_initializer);
 }

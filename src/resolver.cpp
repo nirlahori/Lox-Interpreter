@@ -161,6 +161,30 @@ Object Resolver::visit(Unary<Object>* unaryexpr)
     return nullptr;
 }
 
+Object Resolver::visit(Get<Object>* getexpr)
+{
+    resolve(getexpr->object);
+    return nullptr;
+}
+
+Object Resolver::visit(Set<Object>* setexpr)
+{
+    resolve(setexpr->value);
+    resolve(setexpr->object);
+    return nullptr;
+}
+
+Object Resolver::visit(This<Object>* thisexpr)
+{
+    if(current_class != ClassType::Class){
+        Lox::error(thisexpr->keyword, "Can't use 'this' outside of a class");
+    }
+    else{
+        resolve_local(thisexpr, thisexpr->keyword);
+    }
+    return nullptr;
+}
+
 void Resolver::visit(Block<void>* block)
 {
     begin_scope();
@@ -209,6 +233,9 @@ void Resolver::visit(Return<void>* retstmt)
         Lox::error(retstmt->keyword, "Can't return from top-level code");
     }
     if(retstmt->value){
+        if(current_function == FunctionType::initializer){
+            Lox::error(retstmt->keyword, "Can't return a value from an initializer");
+        }
         resolve(retstmt->value);
     }
 }
@@ -219,3 +246,18 @@ void Resolver::visit(While<void>* whilestmt)
     resolve(whilestmt->body);
 }
 
+void Resolver::visit(Class<void>* classstmt)
+{
+    ClassType enclosing {current_class};
+    current_class = ClassType::Class;
+    declare(classstmt->name);
+    define(classstmt->name);
+    begin_scope();
+    scopes.back().insert({"this", true});
+    for(const std::unique_ptr<Function<void>>& func : classstmt->methods){
+        FunctionType declaration {func->name.get_lexeme() == "init" ? FunctionType::initializer : FunctionType::method};
+        resolve_function(func.get(), declaration);
+    }
+    end_scope();
+    current_class = enclosing;
+}

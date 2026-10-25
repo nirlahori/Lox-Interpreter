@@ -1,0 +1,25 @@
+class Data{
+	get(){
+		return "called get() method";
+	}
+	show(){
+		print "called show() method";
+	}
+	getdata(){
+		return this.val;
+	}
+}
+
+var d1 = Data();
+var d2 = Data();
+var d3 = Data();
+d1.val = 10;
+d2.val = 20;
+d3.val = d1.val + d2.val;
+
+print d1.val;
+print d1.getdata();
+print d2.val;
+print d2.getdata();
+print d3.val;
+print d3.getdata();

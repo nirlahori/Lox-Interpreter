@@ -31,6 +31,9 @@ struct Function;
 template<typename T>
 struct Return;
 
+template<typename T>
+struct Class;
+
 
 template<typename T>
 struct Stmt{
@@ -43,6 +46,7 @@ struct Stmt{
         virtual T visit(While<T>*) = 0;
         virtual T visit(Function<T>*) = 0;
         virtual T visit(Return<T>*) = 0;
+        virtual T visit(Class<T>*) = 0;
     };
 
     Stmt() = default;
@@ -170,6 +174,7 @@ struct Function : Stmt<void>
     std::vector<Token> params;
     std::vector<std::unique_ptr<Stmt<void>>> body;
 
+    Function() = default;
     Function(Token _name, std::vector<Token> _params, std::vector<std::unique_ptr<Stmt<void>>> _body) :
         name{_name},
         params{std::move(_params)},
@@ -188,10 +193,29 @@ struct Return : Stmt<void>
     Token keyword;
     std::unique_ptr<Expr<Object>> value;
 
-    Return();
+    Return() = default;
     Return(Token _keyword, std::unique_ptr<Expr<Object>> _value) :
         keyword{_keyword},
         value{std::move(_value)}
+    {}
+
+    T accept(typename Stmt<T>::Visitor* visitor){
+        visitor->visit(this);
+    }
+};
+
+
+template <typename T>
+struct Class : Stmt<void>
+{
+
+    Token name;
+    std::vector<std::unique_ptr<Function<void>>> methods;
+
+    Class() = default;
+    Class(Token _name, std::vector<std::unique_ptr<Function<void>>> _methods) :
+        name{_name},
+        methods{std::move(_methods)}
     {}
 
     T accept(typename Stmt<T>::Visitor* visitor){

@@ -31,7 +31,6 @@ class Interpreter : public Expr<Object>::Visitor, public Stmt<void>::Visitor
     std::vector<std::unique_ptr<Environment>> envvec;
     std::unordered_map<Expr<Object>*, int> locals;
 
-
 public:
     Interpreter();
     Interpreter(Environment* env);
@@ -44,6 +43,9 @@ public:
     Object visit(Assign<Object>* asgn);
     Object visit(Logical<Object>* log);
     Object visit(Call<Object>* call);
+    Object visit(Get<Object>* get);
+    Object visit(Set<Object>* set);
+    Object visit(This<Object>* thisexpr);;
 
     void visit(Expression<void>* expr);
     void visit(Print<void>* prt);
@@ -53,6 +55,8 @@ public:
     void visit(While<void>* whilestmt);
     void visit(Function<void>* fun);
     void visit(Return<void>* ret);
+    void visit(Class<void>* classstmt);
+
 
 
     void interpret(std::vector<std::unique_ptr<Stmt<void>>> statements);

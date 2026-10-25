@@ -2,9 +2,14 @@
 
 Object::Object() = default;
 
+Object::Object(LoxInstance& instance) :
+    obj_ptr{std::make_unique<ObjectImpl<LoxInstance>>(instance)}
+{}
+
 Object::Object(std::nullptr_t) :
     obj_ptr{nullptr}
 {}
+
 Object::Object(const Object& other){
     if(!other.obj_ptr){
         obj_ptr = nullptr;
@@ -44,6 +49,7 @@ Object::operator bool() const{
     }
     return obj_ptr.get();
 }
+
 std::string Object::underlying_type() const{
     return obj_ptr->underlying_type();
 }
@@ -51,4 +57,9 @@ std::string Object::underlying_type() const{
 LoxCallable *Object::as_callable()
 {
     return obj_ptr->as_callable();
+}
+
+LoxInstance *Object::as_lox_class_instance()
+{
+    return obj_ptr->as_lox_class_instance();
 }

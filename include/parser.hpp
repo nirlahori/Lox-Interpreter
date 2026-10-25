@@ -32,6 +32,7 @@ class Parser
     std::unique_ptr<Stmt<void>>                For_statement();
     std::unique_ptr<Stmt<void>>                function(std::string_view);
     std::unique_ptr<Stmt<void>>                Return_statement();
+    std::unique_ptr<Stmt<void>>                Class_declaration();
     std::unique_ptr<Expr<Object>>              assignment();
     std::unique_ptr<Expr<Object>>              equality();
     std::unique_ptr<Expr<Object>>              comparison();

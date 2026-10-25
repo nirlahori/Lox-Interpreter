@@ -6,7 +6,19 @@
 #include <ostream>
 
 class  LoxFunction;
+class  LoxClass;
+class  LoxInstance;
 struct LoxCallable;
+
+template<typename T>
+struct resolve_type{
+    using type = T;
+};
+
+template<>
+struct resolve_type<LoxInstance>{
+    using type = LoxInstance&;
+};
 
 
 class Object{
@@ -16,11 +28,11 @@ private:
     class ObjectBase{
 
         public:
-        using type = void;
         virtual std::unique_ptr<ObjectBase> clone() = 0;
         virtual std::string to_str() = 0;
         virtual std::string underlying_type() = 0;
         virtual LoxCallable* as_callable() = 0;
+        virtual LoxInstance* as_lox_class_instance() = 0;
         virtual ~ObjectBase() = default;
     };
 
@@ -28,7 +40,8 @@ private:
     template<typename ObjectType>
     class ObjectImpl : public ObjectBase{
 
-        ObjectType data;
+        resolve_type<ObjectType>::type data;
+
     public:
 
         ObjectImpl() = default;
@@ -36,20 +49,33 @@ private:
             data{_data}
         {}
 
+        ObjectImpl(LoxInstance& instance) :
+            data{instance}
+        {}
+
+        ObjectImpl(ObjectType&& _data) :
+            data{std::move(_data)}
+        {}
+
         std::unique_ptr<ObjectBase> clone() {
             return std::make_unique<ObjectImpl<ObjectType>>(*this);
         }
 
         std::string to_str(){
-            if constexpr(std::is_same_v<std::string, ObjectType>){
-                return data;
+            if constexpr(std::is_same_v<LoxInstance, ObjectType>){
+                return "lox_instance";
             }
             else{
-                if constexpr(std::is_same_v<LoxFunction, ObjectType>){
-                    return data.to_string();
+                if constexpr(std::is_same_v<std::string, ObjectType>){
+                    return data;
                 }
                 else{
-                    return std::to_string(data);
+                    if constexpr(std::is_same_v<LoxFunction, ObjectType> || std::is_same_v<LoxClass, ObjectType>){
+                        return data.to_string();
+                    }
+                    else{
+                        return std::to_string(data);
+                    }
                 }
             }
         }
@@ -67,10 +93,25 @@ private:
             else if(std::is_same<ObjectType, LoxFunction>::value){
                 return "lox_function";
             }
+            else if(std::is_same<ObjectType, LoxClass>::value){
+                return "lox_class";
+            }
+            else if(std::is_same<ObjectType, LoxInstance>::value){
+                return "lox_instance";
+            }
         }
 
         LoxCallable* as_callable(){
-            if constexpr(std::is_base_of<LoxCallable, ObjectType>::value){
+            if constexpr(std::is_base_of<LoxCallable, typename resolve_type<ObjectType>::type>::value){
+                return &data;
+            }
+            else{
+                return nullptr;
+            }
+        }
+
+        LoxInstance* as_lox_class_instance(){
+            if constexpr(std::is_same<LoxInstance, ObjectType>::value){
                 return &data;
             }
             else{
@@ -82,9 +123,7 @@ private:
 
     };
 
-
     std::unique_ptr<ObjectBase> obj_ptr;
-
 
 public:
 
@@ -94,7 +133,10 @@ public:
     Object(const T& _val) :
         obj_ptr{std::make_unique<ObjectImpl<T>>(_val)}
     {}
+    Object(LoxInstance&);
+
     Object(std::nullptr_t);
+
     Object(const Object& other);
     Object& operator= (const Object& other);
 
@@ -135,6 +177,8 @@ public:
         }
     }
 
+    LoxInstance* as_lox_class_instance();
+
     friend bool operator== (const Object& lhs, const double& rhs){
         if(lhs.underlying_type() == "double"){
             return std::stod(lhs) == rhs;
@@ -142,6 +186,5 @@ public:
         return false;
     }
 };
-
 
 #endif // OBJECT_HPP

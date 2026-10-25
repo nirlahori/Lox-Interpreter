@@ -14,8 +14,16 @@
 
 enum class FunctionType{
     none,
-    function
+    function,
+    method,
+    initializer
 };
+
+enum class ClassType{
+    none,
+    Class
+};
+
 
 
 class Resolver : public Expr<Object>::Visitor, public Stmt<void>::Visitor
@@ -24,6 +32,7 @@ class Resolver : public Expr<Object>::Visitor, public Stmt<void>::Visitor
 
     Interpreter* interpreter;
     FunctionType current_function {FunctionType::none};
+    ClassType current_class {ClassType::none};
 
     void resolve(const std::unique_ptr<Stmt<void>>&);
     void resolve(const std::unique_ptr<Expr<Object>>&);
@@ -53,6 +62,9 @@ public:
     }
     Object visit(Logical<Object>*);
     Object visit(Unary<Object>*);
+    Object visit(Get<Object>*);
+    Object visit(Set<Object>*);
+    Object visit(This<Object>*);
 
 
     void visit(Block<void>*);
@@ -63,6 +75,7 @@ public:
     void visit(Print<void>*);
     void visit(Return<void>*);
     void visit(While<void>*);
+    void visit(Class<void>*);
 };
 
 #endif // RESOLVER_HPP

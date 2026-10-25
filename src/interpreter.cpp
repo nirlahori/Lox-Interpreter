@@ -3,6 +3,8 @@
 #include "loxcallable.hpp"
 #include "loxfunction.hpp"
 #include "returnvalue.hpp"
+#include "loxclass.hpp"
+#include "loxinstance.hpp"
 
 #include "lox.hpp"
 #include <iostream>
@@ -18,7 +20,6 @@ Object Interpreter::visit(Literal<Object>* lit)
 Object Interpreter::visit(Variable<Object> *var)
 {
     return look_up_variable(var->name, var);
-    //return environment->get(var->name);
 }
 
 Object Interpreter::visit(Assign<Object> *asgn)
@@ -30,8 +31,8 @@ Object Interpreter::visit(Assign<Object> *asgn)
     }
     catch(std::out_of_range& ex){
         globals.assign(asgn->name, value);
+        return value;
     }
-    //environment->assign(asgn->name, value);
     environment->assign_at(distance, asgn->name, value);
     return value;
 }
@@ -68,6 +69,36 @@ Object Interpreter::visit(Call<Object> *call)
         throw RuntimeError(call->paren, "Expected " + std::to_string(function->arity()) + " arguments but got " + std::to_string(arguments.size()));
     }
     return function->call(this, std::move(arguments));
+}
+
+Object Interpreter::visit(Get<Object> *get)
+{
+    Object object {evaluate(get->object.get())};
+    if(object.underlying_type() == "lox_instance"){
+        LoxInstance* instance {object.as_lox_class_instance()};
+
+        return instance->get(this, get->name);
+    }
+    throw RuntimeError(get->name, "Only instances have properties");
+}
+
+Object Interpreter::visit(Set<Object> *set)
+{
+    Object object {evaluate(set->object.get())};
+    if(object.underlying_type() != "lox_instance"){
+        throw RuntimeError(set->name, "Only instances have fields");
+    }
+    Object value {evaluate(set->value.get())};
+    LoxInstance* instance {object.as_lox_class_instance()};
+    if(instance){
+        instance->set(set->name, value);
+    }
+    return value;
+}
+
+Object Interpreter::visit(This<Object> *thisexpr)
+{
+    return look_up_variable(thisexpr->keyword, thisexpr);
 }
 
 void Interpreter::visit(Expression<void> *stmt)
@@ -116,7 +147,7 @@ void Interpreter::visit(While<void> *whilestmt)
 
 void Interpreter::visit(Function<void> *fun)
 {
-    LoxFunction function {fun, environment};
+    LoxFunction function {fun, environment, false};
     environment->define_name(fun->name.get_lexeme(), function);
 }
 
@@ -127,6 +158,20 @@ void Interpreter::visit(Return<void> *ret)
         value = evaluate(ret->value.get());
     }
     throw ReturnValue{.value=value};
+}
+
+void Interpreter::visit(Class<void> *classstmt)
+{
+    environment->define_name(classstmt->name.get_lexeme(), nullptr);
+
+    std::unordered_map<std::string, LoxFunction> methods;
+    for(const std::unique_ptr<Function<void>>& method : classstmt->methods){
+        LoxFunction function {method.get(), environment, method->name.get_lexeme() == "init"};
+        methods.insert({method->name.get_lexeme(), function});
+    }
+
+    LoxClass klass {classstmt->name.get_lexeme(), methods};
+    environment->assign(classstmt->name, klass);
 }
 
 void Interpreter::interpret(std::vector<std::unique_ptr<Stmt<void>>> statements)

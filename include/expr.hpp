@@ -34,6 +34,15 @@ template<typename T>
 struct Call;
 
 template<typename T>
+struct Get;
+
+template<typename T>
+struct Set;
+
+template<typename T>
+struct This;
+
+template<typename T>
 struct Expr{
 
     struct Visitor{
@@ -46,6 +55,9 @@ struct Expr{
         virtual T visit(Assign<T>*) = 0;
         virtual T visit(Logical<T>*) = 0;
         virtual T visit(Call<T>*) = 0;
+        virtual T visit(Get<T>*) = 0;
+        virtual T visit(Set<T>*) = 0;
+        virtual T visit(This<T>*) = 0;
     };
 
     Expr() = default;
@@ -194,6 +206,56 @@ struct Call : Expr<T>
     }
 };
 
+template <typename T>
+struct Get : Expr<T>
+{
+    std::unique_ptr<Expr<Object>> object;
+    Token name;
+
+    Get() = default;
+    Get(std::unique_ptr<Expr<Object>> _object, Token _name) :
+        object{std::move(_object)},
+        name{_name}
+    {}
+
+    T accept(Expr<T>::Visitor* visitor){
+        return visitor->visit(this);
+    }
+};
+
+template <typename T>
+struct Set : Expr<T>
+{
+    std::unique_ptr<Expr<Object>> object;
+    Token name;
+    std::unique_ptr<Expr<Object>> value;
+
+    Set() = default;
+    Set(std::unique_ptr<Expr<Object>> _object, Token _name, std::unique_ptr<Expr<Object>> _value) :
+        object{std::move(_object)},
+        name{_name},
+        value{std::move(_value)}
+    {}
+
+    T accept(Expr<T>::Visitor* visitor){
+        return visitor->visit(this);
+    }
+};
+
+template <typename T>
+struct This : Expr<T>
+{
+    Token keyword;
+    This() = default;
+    This(Token _keyword) :
+        keyword{_keyword}
+    {}
+
+    T accept(Expr<T>::Visitor* visitor){
+        return visitor->visit(this);
+    }
+};
+
 
 static std::unordered_map<std::type_index, std::string> expr_table {
     {std::type_index(typeid(Expr<Object>)),     "Expr<Object>"},
@@ -203,7 +265,8 @@ static std::unordered_map<std::type_index, std::string> expr_table {
     {std::type_index(typeid(Literal<Object>)),  "Literal<Object>"},
     {std::type_index(typeid(Variable<Object>)), "Variable<Object>"},
     {std::type_index(typeid(Assign<Object>)),   "Assign<Object>"},
-    {std::type_index(typeid(Call<Object>)),     "Call<Object>"}
+    {std::type_index(typeid(Call<Object>)),     "Call<Object>"},
+    {std::type_index(typeid(Get<Object>)),      "Get<Object>"}
 };
 
 

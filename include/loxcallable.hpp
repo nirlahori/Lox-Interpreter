@@ -4,7 +4,8 @@
 #include <vector>
 
 #include "object.hpp"
-#include "interpreter.hpp"
+
+class Interpreter;
 
 struct LoxCallable
 {
