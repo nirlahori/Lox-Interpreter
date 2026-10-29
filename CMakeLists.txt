@@ -28,6 +28,7 @@ add_executable(Lox_Interpreter src/main.cpp
     include/resolver.hpp src/resolver.cpp
     include/loxclass.hpp src/loxclass.cpp
     include/loxinstance.hpp src/loxinstance.cpp
+    include/loxgetter.hpp src/loxgetter.cpp
 
 )
 

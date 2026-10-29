@@ -67,7 +67,6 @@ void Resolver::resolve_local(Expr<Object>* expr, Token name)
     if(index != -1){
         interpreter->resolve(expr, scopes.size() - 1 - index);
     }
-
 }
 
 int Resolver::get_index(std::vector<std::unordered_map<std::string, bool>>::const_reverse_iterator iter)
@@ -99,6 +98,15 @@ void Resolver::resolve_function(Function<void>* func, FunctionType type)
     current_function = enclosing_function;
 }
 
+void Resolver::resolve_getter_field(Getter_Field<void>* getter)
+{
+    FunctionType enclosing_function {current_function};
+    current_function = FunctionType::getter_field;
+    begin_scope();
+    resolve(getter->body);
+    end_scope();
+    current_function = enclosing_function;
+}
 
 Resolver::Resolver(Interpreter* _interpreter) :
 
@@ -177,7 +185,10 @@ Object Resolver::visit(Set<Object>* setexpr)
 Object Resolver::visit(This<Object>* thisexpr)
 {
     if(current_class != ClassType::Class){
-        Lox::error(thisexpr->keyword, "Can't use 'this' outside of a class");
+        Lox::error(thisexpr->keyword, "Can't use 'this' outside of a class\n");
+    }
+    else if(current_function == FunctionType::static_method){
+        Lox::error(thisexpr->keyword, "Can't use 'this' inside static method\n");
     }
     else{
         resolve_local(thisexpr, thisexpr->keyword);
@@ -230,11 +241,11 @@ void Resolver::visit(Print<void>* printstmt)
 void Resolver::visit(Return<void>* retstmt)
 {
     if(current_function == FunctionType::none){
-        Lox::error(retstmt->keyword, "Can't return from top-level code");
+        Lox::error(retstmt->keyword, "Can't return from top-level code\n");
     }
     if(retstmt->value){
         if(current_function == FunctionType::initializer){
-            Lox::error(retstmt->keyword, "Can't return a value from an initializer");
+            Lox::error(retstmt->keyword, "Can't return a value from an initializer\n");
         }
         resolve(retstmt->value);
     }
@@ -248,7 +259,7 @@ void Resolver::visit(While<void>* whilestmt)
 
 void Resolver::visit(Class<void>* classstmt)
 {
-    ClassType enclosing {current_class};
+    ClassType enclosing_class {current_class};
     current_class = ClassType::Class;
     declare(classstmt->name);
     define(classstmt->name);
@@ -258,6 +269,22 @@ void Resolver::visit(Class<void>* classstmt)
         FunctionType declaration {func->name.get_lexeme() == "init" ? FunctionType::initializer : FunctionType::method};
         resolve_function(func.get(), declaration);
     }
+    for(const std::unique_ptr<Function<void>>& func : classstmt->static_methods){
+        FunctionType declaration {FunctionType::static_method};
+        resolve_function(func.get(), declaration);
+    }
+
+    for(const std::unique_ptr<Getter_Field<void>>& getterfield : classstmt->getter_fields){
+        resolve_getter_field(getterfield.get());
+    }
+
     end_scope();
-    current_class = enclosing;
+    current_class = enclosing_class;
+}
+
+void Resolver::visit(Getter_Field<void>* getterstmt)
+{
+    begin_scope();
+    resolve(getterstmt->body);
+    end_scope();
 }

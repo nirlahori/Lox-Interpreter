@@ -8,6 +8,7 @@
 class  LoxFunction;
 class  LoxClass;
 class  LoxInstance;
+class  LoxGetter;
 struct LoxCallable;
 
 template<typename T>
@@ -70,7 +71,9 @@ private:
                     return data;
                 }
                 else{
-                    if constexpr(std::is_same_v<LoxFunction, ObjectType> || std::is_same_v<LoxClass, ObjectType>){
+                    if constexpr(std::is_same_v<LoxFunction, ObjectType>
+                                  || std::is_same_v<LoxClass, ObjectType>
+                                  || std::is_same_v<LoxGetter, ObjectType>){
                         return data.to_string();
                     }
                     else{
@@ -98,6 +101,9 @@ private:
             }
             else if(std::is_same<ObjectType, LoxInstance>::value){
                 return "lox_instance";
+            }
+            else if(std::is_same<ObjectType, LoxGetter>::value){
+                return "lox_getter";
             }
         }
 

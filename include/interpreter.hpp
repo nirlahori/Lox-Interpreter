@@ -24,7 +24,6 @@ class Interpreter : public Expr<Object>::Visitor, public Stmt<void>::Visitor
     void execute(Stmt<void>* stmt);
     Object look_up_variable(Token, Expr<Object>*);
 
-
     Environment globals;
     Environment* environment {&globals};
 
@@ -45,7 +44,7 @@ public:
     Object visit(Call<Object>* call);
     Object visit(Get<Object>* get);
     Object visit(Set<Object>* set);
-    Object visit(This<Object>* thisexpr);;
+    Object visit(This<Object>* thisexpr);
 
     void visit(Expression<void>* expr);
     void visit(Print<void>* prt);
@@ -56,6 +55,7 @@ public:
     void visit(Function<void>* fun);
     void visit(Return<void>* ret);
     void visit(Class<void>* classstmt);
+    void visit(Getter_Field<void>* gettersttmt);
 
 
 

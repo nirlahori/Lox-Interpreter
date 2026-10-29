@@ -5,9 +5,11 @@
 #include "returnvalue.hpp"
 #include "loxclass.hpp"
 #include "loxinstance.hpp"
+#include "loxgetter.hpp"
 
 #include "lox.hpp"
 #include <iostream>
+#include <format>
 
 Interpreter::Interpreter() = default;
 
@@ -76,8 +78,21 @@ Object Interpreter::visit(Get<Object> *get)
     Object object {evaluate(get->object.get())};
     if(object.underlying_type() == "lox_instance"){
         LoxInstance* instance {object.as_lox_class_instance()};
-
-        return instance->get(this, get->name);
+        Object property {instance->get(this, get->name)};
+        if(property.underlying_type() == "lox_getter"){
+            LoxCallable* getter_field {property.as_callable()};
+            if(getter_field){
+                return getter_field->call(this, {});
+            }
+            else{
+                throw RuntimeError(get->name, "Can't call the getter field\n");
+            }
+        }
+        return property;
+    }
+    else if(object.underlying_type() == "lox_class"){
+        LoxClass* klass {static_cast<LoxClass*>(object.as_callable())};
+        return klass->get_static_method(get->name.get_lexeme());
     }
     throw RuntimeError(get->name, "Only instances have properties");
 }
@@ -165,13 +180,34 @@ void Interpreter::visit(Class<void> *classstmt)
     environment->define_name(classstmt->name.get_lexeme(), nullptr);
 
     std::unordered_map<std::string, LoxFunction> methods;
+    std::unordered_map<std::string, LoxFunction> static_methods;
+    std::unordered_map<std::string, LoxGetter> getter_fields;
+
     for(const std::unique_ptr<Function<void>>& method : classstmt->methods){
         LoxFunction function {method.get(), environment, method->name.get_lexeme() == "init"};
         methods.insert({method->name.get_lexeme(), function});
     }
 
-    LoxClass klass {classstmt->name.get_lexeme(), methods};
+    for(const std::unique_ptr<Function<void>>& method : classstmt->static_methods){
+        LoxFunction function {method.get(), environment};
+        static_methods.insert({method->name.get_lexeme(), function});
+    }
+
+    for(const std::unique_ptr<Getter_Field<void>>& field : classstmt->getter_fields){
+        LoxGetter getter_field {field.get(), environment};
+        getter_fields.insert({field->name.get_lexeme(), getter_field});
+    }
+
+    LoxClass klass {classstmt->name.get_lexeme(), methods, static_methods, getter_fields};
     environment->assign(classstmt->name, klass);
+}
+
+// This function would never be called as Getter Fields don't have a standalone AST node
+// The class Getter fields implementation can be modified to get rid of unnecessary code
+void Interpreter::visit(Getter_Field<void> *gettersttmt)
+{
+    LoxGetter getterfield {gettersttmt, environment};
+    environment->define_name(gettersttmt->name.get_lexeme(), getterfield);
 }
 
 void Interpreter::interpret(std::vector<std::unique_ptr<Stmt<void>>> statements)
@@ -270,6 +306,7 @@ Object Interpreter::look_up_variable(Token name, Expr<Object>* expr)
     return environment->get_at(distance, name.get_lexeme());
 }
 
+
 void Interpreter::execute_block(const std::vector<std::unique_ptr<Stmt<void>>>& statements, Environment& env)
 {
     Environment* previous = environment;
@@ -286,6 +323,7 @@ void Interpreter::execute_block(const std::vector<std::unique_ptr<Stmt<void>>>& 
         throw e;
     }
     catch(std::exception& e){
+        std::cout << "Exception caught: " << e.what() << std::endl;
         throw e;
     }
     // If exception gets thrown then the previous environment won't get restored and the program

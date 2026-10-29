@@ -40,6 +40,10 @@ Object LoxInstance::get(Interpreter* intp, Token name)
     if(fields.contains(name.get_lexeme())){
         return fields.at(name.get_lexeme());
     }
+    if(klass.contains_getter_field(name.get_lexeme())){
+        LoxGetter field {klass.find_getter_field(name.get_lexeme())};
+        return field.bind(intp, *this);
+    }
     if(klass.contains_method(name.get_lexeme())){
         LoxFunction method {klass.find_method(name.get_lexeme())};
         return method.bind(intp, *this);

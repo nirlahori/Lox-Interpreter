@@ -144,16 +144,40 @@ std::unique_ptr<Stmt<void>> Parser::Class_declaration()
     Token name {consume(TokenType::IDENTIFIER, "Expect class name")};
     consume(TokenType::LEFT_BRACE, "Expect '{' before class body");
     std::vector<std::unique_ptr<Function<void>>> methods;
+    std::vector<std::unique_ptr<Function<void>>> static_methods;
+    std::vector<std::unique_ptr<Getter_Field<void>>> getter_fields;
+
     std::unique_ptr<Stmt<void>> stmt;
     std::unique_ptr<Function<void>> func;
+    std::unique_ptr<Getter_Field<void>> getter_field;
     while(!check(TokenType::RIGHT_BRACE) && !is_at_end()){
-        stmt = function("method");
-        func.reset(dynamic_cast<Function<void>*>(stmt.release()));
-        methods.push_back(std::move(func));
+        if(check(TokenType::CLASS)){
+            consume(TokenType::CLASS, "");
+            stmt = function("method");
+            func.reset(dynamic_cast<Function<void>*>(stmt.release()));
+            static_methods.push_back(std::move(func));
+        }
+        else if(check_next(TokenType::LEFT_PAREN)){
+            stmt = function("method");
+            func.reset(dynamic_cast<Function<void>*>(stmt.release()));
+            methods.push_back(std::move(func));
+        }
+        else{
+            stmt = Getter();
+            getter_field.reset(dynamic_cast<Getter_Field<void>*>(stmt.release()));
+            getter_fields.push_back(std::move(getter_field));
+        }
     }
     consume(TokenType::RIGHT_BRACE, "Expect '}' after class body");
-    return std::make_unique<Class<void>>(name, std::move(methods));
+    return std::make_unique<Class<void>>(name, std::move(methods), std::move(static_methods), std::move(getter_fields));
+}
 
+std::unique_ptr<Stmt<void>> Parser::Getter()
+{
+    Token name {consume(TokenType::IDENTIFIER, "Expect getter field name\n")};
+    consume(TokenType::LEFT_BRACE, "Expect '{' after getter field name\n");
+    std::vector<std::unique_ptr<Stmt<void>>> body {block()};
+    return std::make_unique<Getter_Field<void>>(name, std::move(body));
 }
 
 std::unique_ptr<Stmt<void>> Parser::print_statement()
@@ -362,12 +386,21 @@ std::unique_ptr<Expr<Object>> Parser::call()
     }
     return expr;
 }
+
 bool Parser::check(TokenType type)
 {
     if(is_at_end()){
         return false;
     }
     return peek().get_type() == type;
+}
+
+bool Parser::check_next(TokenType type)
+{
+    if(is_at_end()){
+        return false;
+    }
+    return std::next(current)->get_type() == type;
 }
 
 Token Parser::advance()

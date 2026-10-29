@@ -16,7 +16,9 @@ enum class FunctionType{
     none,
     function,
     method,
-    initializer
+    initializer,
+    static_method,
+    getter_field
 };
 
 enum class ClassType{
@@ -44,7 +46,7 @@ class Resolver : public Expr<Object>::Visitor, public Stmt<void>::Visitor
     void resolve_local(Expr<Object>*, Token);
     int get_index(std::vector<std::unordered_map<std::string, bool>>::const_reverse_iterator);
     void resolve_function(Function<void>*, FunctionType);
-
+    void resolve_getter_field(Getter_Field<void>*);
 
 public:
 
@@ -76,6 +78,7 @@ public:
     void visit(Return<void>*);
     void visit(While<void>*);
     void visit(Class<void>*);
+    void visit(Getter_Field<void>*);
 };
 
 #endif // RESOLVER_HPP

@@ -34,6 +34,10 @@ struct Return;
 template<typename T>
 struct Class;
 
+template<typename T>
+struct Getter_Field;
+
+
 
 template<typename T>
 struct Stmt{
@@ -47,6 +51,7 @@ struct Stmt{
         virtual T visit(Function<T>*) = 0;
         virtual T visit(Return<T>*) = 0;
         virtual T visit(Class<T>*) = 0;
+        virtual T visit(Getter_Field<T>*) = 0;
     };
 
     Stmt() = default;
@@ -208,14 +213,17 @@ struct Return : Stmt<void>
 template <typename T>
 struct Class : Stmt<void>
 {
-
     Token name;
     std::vector<std::unique_ptr<Function<void>>> methods;
+    std::vector<std::unique_ptr<Function<void>>> static_methods;
+    std::vector<std::unique_ptr<Getter_Field<void>>> getter_fields;
 
     Class() = default;
-    Class(Token _name, std::vector<std::unique_ptr<Function<void>>> _methods) :
+    Class(Token _name, std::vector<std::unique_ptr<Function<void>>> _methods, std::vector<std::unique_ptr<Function<void>>> _static_methods, std::vector<std::unique_ptr<Getter_Field<void>>> _getter_fields) :
         name{_name},
-        methods{std::move(_methods)}
+        methods{std::move(_methods)},
+        static_methods{std::move(_static_methods)},
+        getter_fields{std::move((_getter_fields))}
     {}
 
     T accept(typename Stmt<T>::Visitor* visitor){
@@ -223,5 +231,22 @@ struct Class : Stmt<void>
     }
 };
 
+
+template <typename T>
+struct Getter_Field : Stmt<void>
+{
+    Token name;
+    std::vector<std::unique_ptr<Stmt<void>>> body;
+
+    Getter_Field() = default;
+    Getter_Field(Token _name, std::vector<std::unique_ptr<Stmt<void>>> _body) :
+        name{_name},
+        body{std::move(_body)}
+    {}
+
+    T accept(typename Stmt<T>::Visitor* visitor){
+        visitor->visit(this);
+    }
+};
 
 #endif // STMT_HPP

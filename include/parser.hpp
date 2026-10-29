@@ -33,6 +33,7 @@ class Parser
     std::unique_ptr<Stmt<void>>                function(std::string_view);
     std::unique_ptr<Stmt<void>>                Return_statement();
     std::unique_ptr<Stmt<void>>                Class_declaration();
+    std::unique_ptr<Stmt<void>>                Getter();
     std::unique_ptr<Expr<Object>>              assignment();
     std::unique_ptr<Expr<Object>>              equality();
     std::unique_ptr<Expr<Object>>              comparison();
@@ -47,14 +48,18 @@ class Parser
 
     bool match(const std::vector<TokenType>& tokens);
     bool check(TokenType type);
+    bool check_next(TokenType type);
     Token advance();
     Token previous();
     bool is_at_end();
     Token peek();
 
+
+
     Token consume(TokenType type, std::string msg);
     ParseError error(Token type, std::string msg);
     void synchronize();
+
 
 
 

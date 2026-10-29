@@ -15,6 +15,20 @@ LoxClass::LoxClass(std::string _name, std::unordered_map<std::string, LoxFunctio
     methods{_methods}
 {}
 
+LoxClass::LoxClass(std::string _name, std::unordered_map<std::string, LoxFunction> _methods, std::unordered_map<std::string, LoxFunction> _static_methods) :
+    name{_name},
+    methods{_methods},
+    static_methods{_static_methods}
+{}
+
+LoxClass::LoxClass(std::string _name, std::unordered_map<std::string, LoxFunction> _methods, std::unordered_map<std::string, LoxFunction> _static_methods, std::unordered_map<std::string, LoxGetter> _getter_fields) :
+    name{_name},
+    methods{_methods},
+    static_methods{_static_methods},
+    getter_fields{_getter_fields}
+
+{}
+
 Object LoxClass::call(Interpreter* intp, std::vector<Object> arguments)
 {
     LoxInstance* instance {create_instance(this)};
@@ -36,14 +50,38 @@ std::string LoxClass::to_string()
     return name;
 }
 
-LoxFunction LoxClass::find_method(std::string name)
+LoxFunction LoxClass::find_method(std::string name, bool is_static)
 {
+    if(is_static){
+        return static_methods.at(name);
+    }
     return methods.at(name);
 }
 
-bool LoxClass::contains_method(std::string name)
+bool LoxClass::contains_method(std::string name, bool is_static)
 {
+    if(is_static){
+        return static_methods.contains(name);
+    }
     return methods.contains(name);
+}
+
+LoxFunction LoxClass::get_static_method(std::string name)
+{
+    if(contains_method(name, true)){
+        return find_method(name, true);
+    }
+    return LoxFunction();
+}
+
+bool LoxClass::contains_getter_field(std::string name)
+{
+    return getter_fields.contains(name);
+}
+
+LoxGetter LoxClass::find_getter_field(std::string name)
+{
+    return getter_fields.at(name);
 }
 
 LoxInstance* LoxClass::create_instance(LoxClass* instance){
