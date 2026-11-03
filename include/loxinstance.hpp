@@ -23,6 +23,7 @@ public:
 
     LoxInstance& operator = (const LoxInstance& other);
     LoxInstance& operator = (LoxInstance&& other);
+
     Object get(Interpreter* intp, Token name);
     void set(Token name, Object value);
     std::string to_string();

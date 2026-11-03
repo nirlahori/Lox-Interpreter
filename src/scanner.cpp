@@ -83,7 +83,7 @@ void Scanner::scan_token()
         } else if (std::isalpha(ch)) {
             expect_identifier();
         } else {
-            Lox::error(line, "Unexpected character\n");
+            Lox::error(line, "Unexpected character");
         }
     }
 }
@@ -150,7 +150,7 @@ void Scanner::expect_string()
         add_token(TokenType::STRING, std::move(obj));
     }
     else{
-        Lox::error(line, "Unterminated string\n");
+        Lox::error(line, "Unterminated string");
     }
 }
 

@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 #include <ostream>
+#include <iostream>
+#include <format>
 
 class  LoxFunction;
 class  LoxClass;
@@ -171,6 +173,9 @@ public:
         }
         else if(lhs.underlying_type() == "bool" && rhs.underlying_type() == "bool"){
             return static_cast<bool>(lhs) == static_cast<bool>(rhs);
+        }
+        else if(lhs.underlying_type() == "lox_instance" && rhs.underlying_type() == "lox_instance"){
+            return lhs.obj_ptr->as_lox_class_instance() == rhs.obj_ptr->as_lox_class_instance();
         }
         else{
             return false;

@@ -21,7 +21,8 @@ enum class FunctionType{
 
 enum class ClassType{
     none,
-    Class
+    Class,
+    subclass
 };
 
 
@@ -35,7 +36,7 @@ class Resolver : public Expr<Object>::Visitor, public Stmt<void>::Visitor
     ClassType current_class {ClassType::none};
 
     void resolve(const std::unique_ptr<Stmt<void>>&);
-    void resolve(const std::unique_ptr<Expr<Object>>&);
+    void resolve(Expr<Object>*);
 
     void begin_scope();
     void end_scope();
@@ -65,6 +66,8 @@ public:
     Object visit(Get<Object>*);
     Object visit(Set<Object>*);
     Object visit(This<Object>*);
+    Object visit(Super<Object>*);
+
 
 
     void visit(Block<void>*);

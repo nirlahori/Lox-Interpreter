@@ -1,3 +1,4 @@
+#include <stdexcept>
 #include "loxclass.hpp"
 #include "loxinstance.hpp"
 #include "interpreter.hpp"
@@ -12,6 +13,12 @@ LoxClass::LoxClass(std::string _name) :
 
 LoxClass::LoxClass(std::string _name, std::unordered_map<std::string, LoxFunction> _methods) :
     name{_name},
+    methods{_methods}
+{}
+
+LoxClass::LoxClass(std::string _name, LoxClass *_superclass, std::unordered_map<std::string, LoxFunction> _methods) :
+    name{_name},
+    superclass{_superclass},
     methods{_methods}
 {}
 
@@ -38,12 +45,26 @@ std::string LoxClass::to_string()
 
 LoxFunction LoxClass::find_method(std::string name)
 {
-    return methods.at(name);
+    try{
+        return methods.at(name);
+    }
+    catch(std::out_of_range& ex){
+        if(superclass){
+            return superclass->find_method(name);
+        }
+    }
+    return LoxFunction(nullptr);
 }
 
 bool LoxClass::contains_method(std::string name)
 {
-    return methods.contains(name);
+    if(methods.contains(name)){
+        return true;
+    }
+    else if(superclass){
+        return superclass->contains_method(name);
+    }
+    return false;
 }
 
 LoxInstance* LoxClass::create_instance(LoxClass* instance){

@@ -19,7 +19,7 @@ void Resolver::resolve(const std::unique_ptr<Stmt<void>>& stmt)
     stmt->accept(this);
 }
 
-void Resolver::resolve(const std::unique_ptr<Expr<Object>>& expr)
+void Resolver::resolve(Expr<Object>* expr)
 {
     expr->accept(this);
 }
@@ -39,7 +39,7 @@ void Resolver::declare(Token name)
     if(!scopes.empty()){
         std::unordered_map<std::string, bool> scope {scopes.back()};
         if(scope.contains(name.get_lexeme())){
-            Lox::error(name, "Already a variable with this name in this scope\n");
+            Lox::error(name, "Already a variable with this name in this scope");
         }
         scope.insert({name.get_lexeme(), false});
     }
@@ -67,7 +67,6 @@ void Resolver::resolve_local(Expr<Object>* expr, Token name)
     if(index != -1){
         interpreter->resolve(expr, scopes.size() - 1 - index);
     }
-
 }
 
 int Resolver::get_index(std::vector<std::unordered_map<std::string, bool>>::const_reverse_iterator iter)
@@ -111,7 +110,7 @@ Object Resolver::visit(Variable<Object>* varexpr)
         auto iter {scopes.back().find(varexpr->name.get_lexeme())};
         if(iter != scopes.back().end()){
             if(!iter->second){
-                Lox::error(varexpr->name, "Can't read local variable in its own initializer\n");
+                Lox::error(varexpr->name, "Can't read local variable in its own initializer");
             }
         }
     }
@@ -121,56 +120,56 @@ Object Resolver::visit(Variable<Object>* varexpr)
 
 Object Resolver::visit(Assign<Object>* assignexpr)
 {
-    resolve(assignexpr->value);
+    resolve(assignexpr->value.get());
     resolve_local(assignexpr, assignexpr->name);
     return nullptr;
 }
 
 Object Resolver::visit(Binary<Object>* binexpr)
 {
-    resolve(binexpr->left);
-    resolve(binexpr->right);
+    resolve(binexpr->left.get());
+    resolve(binexpr->right.get());
     return nullptr;
 }
 
 Object Resolver::visit(Call<Object>* callexpr)
 {
-    resolve(callexpr->callee);
+    resolve(callexpr->callee.get());
     for(const std::unique_ptr<Expr<Object>>& argument : callexpr->arguments){
-        resolve(argument);
+        resolve(argument.get());
     }
     return nullptr;
 }
 
 Object Resolver::visit(Grouping<Object>* groupingexpr)
 {
-    resolve(groupingexpr->expression);
+    resolve(groupingexpr->expression.get());
     return nullptr;
 }
 
 Object Resolver::visit(Logical<Object>* logicalexpr)
 {
-    resolve(logicalexpr->left);
-    resolve(logicalexpr->right);
+    resolve(logicalexpr->left.get());
+    resolve(logicalexpr->right.get());
     return nullptr;
 }
 
 Object Resolver::visit(Unary<Object>* unaryexpr)
 {
-    resolve(unaryexpr->right);
+    resolve(unaryexpr->right.get());
     return nullptr;
 }
 
 Object Resolver::visit(Get<Object>* getexpr)
 {
-    resolve(getexpr->object);
+    resolve(getexpr->object.get());
     return nullptr;
 }
 
 Object Resolver::visit(Set<Object>* setexpr)
 {
-    resolve(setexpr->value);
-    resolve(setexpr->object);
+    resolve(setexpr->value.get());
+    resolve(setexpr->object.get());
     return nullptr;
 }
 
@@ -185,6 +184,18 @@ Object Resolver::visit(This<Object>* thisexpr)
     return nullptr;
 }
 
+Object Resolver::visit(Super<Object>* superexpr)
+{
+    if(current_class == ClassType::none){
+        Lox::error(superexpr->keyword, "Can't use 'super' outside of a class");
+    }
+    else if(current_class != ClassType::subclass){
+        Lox::error(superexpr->keyword, "Can't use 'super' in a class with no superclass");
+    }
+    resolve_local(superexpr, superexpr->keyword);
+    return nullptr;
+}
+
 void Resolver::visit(Block<void>* block)
 {
     begin_scope();
@@ -196,7 +207,7 @@ void Resolver::visit(Var<void>* var)
 {
     declare(var->name);
     if(var->initializer){
-        resolve(var->initializer);
+        resolve(var->initializer.get());
     }
     define(var->name);
 }
@@ -210,12 +221,12 @@ void Resolver::visit(Function<void>* func)
 
 void Resolver::visit(Expression<void>* expr)
 {
-    resolve(expr->expr);
+    resolve(expr->expr.get());
 }
 
 void Resolver::visit(If<void>* ifstmt)
 {
-    resolve(ifstmt->condition);
+    resolve(ifstmt->condition.get());
     resolve(ifstmt->then_branch);
     if(ifstmt->else_branch){
         resolve(ifstmt->else_branch);
@@ -224,7 +235,7 @@ void Resolver::visit(If<void>* ifstmt)
 
 void Resolver::visit(Print<void>* printstmt)
 {
-    resolve(printstmt->expr);
+    resolve(printstmt->expr.get());
 }
 
 void Resolver::visit(Return<void>* retstmt)
@@ -236,13 +247,13 @@ void Resolver::visit(Return<void>* retstmt)
         if(current_function == FunctionType::initializer){
             Lox::error(retstmt->keyword, "Can't return a value from an initializer");
         }
-        resolve(retstmt->value);
+        resolve(retstmt->value.get());
     }
 }
 
 void Resolver::visit(While<void>* whilestmt)
 {
-    resolve(whilestmt->condition);
+    resolve(whilestmt->condition.get());
     resolve(whilestmt->body);
 }
 
@@ -252,6 +263,15 @@ void Resolver::visit(Class<void>* classstmt)
     current_class = ClassType::Class;
     declare(classstmt->name);
     define(classstmt->name);
+    if(classstmt->superclass){
+        current_class = ClassType::subclass;
+        if(classstmt->superclass->name.get_lexeme() == classstmt->name.get_lexeme()){
+            Lox::error(classstmt->superclass->name, "A class can't inherit from itself");
+        }
+        resolve(classstmt->superclass.get());
+        begin_scope();
+        scopes.back().insert({"super", true});
+    }
     begin_scope();
     scopes.back().insert({"this", true});
     for(const std::unique_ptr<Function<void>>& func : classstmt->methods){
@@ -259,5 +279,8 @@ void Resolver::visit(Class<void>* classstmt)
         resolve_function(func.get(), declaration);
     }
     end_scope();
+    if(classstmt->superclass){
+        end_scope();
+    }
     current_class = enclosing;
 }

@@ -210,11 +210,13 @@ struct Class : Stmt<void>
 {
 
     Token name;
+    std::unique_ptr<Variable<Object>> superclass;
     std::vector<std::unique_ptr<Function<void>>> methods;
 
     Class() = default;
-    Class(Token _name, std::vector<std::unique_ptr<Function<void>>> _methods) :
+    Class(Token _name, std::unique_ptr<Variable<Object>> _superclass, std::vector<std::unique_ptr<Function<void>>> _methods) :
         name{_name},
+        superclass{std::move(_superclass)},
         methods{std::move(_methods)}
     {}
 

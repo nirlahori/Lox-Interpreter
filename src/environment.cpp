@@ -1,5 +1,6 @@
 #include "environment.hpp"
 #include "runtimeerror.hpp"
+#include <iostream>
 
 Environment::Environment() :
     values{},
@@ -24,10 +25,10 @@ Object Environment::get(Token name)
     else if(enclosing){
         return enclosing->get(name);
     }
-    throw RuntimeError(name, "Undefined variable '" + name.get_lexeme() + "'.\n");
+    throw RuntimeError(name, "Undefined variable '" + name.get_lexeme() + "'.");
 }
 
-void Environment::assign(Token name, const Object &value)
+void Environment::assign(Token name, const Object& value)
 {
     if(values.contains(name.get_lexeme())){
         values[name.get_lexeme()] = value;
@@ -36,7 +37,7 @@ void Environment::assign(Token name, const Object &value)
         enclosing->assign(name, value);
     }
     else{
-        throw RuntimeError(name, "Undefined variable '" + name.get_lexeme() +"'.\n");
+        throw RuntimeError(name, "Undefined variable '" + name.get_lexeme() +"'.");
     }
 }
 
@@ -48,6 +49,22 @@ Object Environment::get_at(int distance, std::string name)
 void Environment::assign_at(int distance, Token name, const Object &value)
 {
     ancestor(distance)->values[name.get_lexeme()] = value;
+}
+
+Object& Environment::get_reference(int distance, std::string name)
+{
+    return ancestor(distance)->values.at(name);
+}
+
+Object& Environment::get_reference(Token name)
+{
+    if(values.contains(name.get_lexeme())){
+        return values.at(name.get_lexeme());
+    }
+    else if(enclosing){
+        return enclosing->get_reference(name);
+    }
+    throw RuntimeError(name, "Undefined variable '" + name.get_lexeme() + "'.");
 }
 
 Environment* Environment::ancestor(int distance)

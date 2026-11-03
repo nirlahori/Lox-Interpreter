@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <string>
+#include <utility>
 
 #include "object.hpp"
 #include "token.hpp"
@@ -22,6 +23,10 @@ public:
     void assign(Token name, const Object& value);
     Object get_at(int distance, std::string name);
     void assign_at(int distance, Token name, const Object& value);
+    Object& get_reference(int distance, std::string name);
+    Object& get_reference(Token name);
+
+
 };
 
 #endif // ENVIRONMENT_HPP

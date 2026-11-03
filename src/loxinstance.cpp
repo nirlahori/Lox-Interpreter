@@ -25,7 +25,6 @@ LoxInstance& LoxInstance::operator = (const LoxInstance& other){
     return *this;
 }
 
-
 LoxInstance &LoxInstance::operator =(LoxInstance&& other)
 {
     klass = std::move(other.klass);
@@ -49,7 +48,7 @@ Object LoxInstance::get(Interpreter* intp, Token name)
 
 void LoxInstance::set(Token name, Object value)
 {
-    fields.insert({name.get_lexeme(), value});
+    fields.insert_or_assign(name.get_lexeme(), value);
 }
 
 std::string LoxInstance::to_string()

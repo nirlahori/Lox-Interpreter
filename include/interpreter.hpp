@@ -13,8 +13,8 @@
 
 class Interpreter : public Expr<Object>::Visitor, public Stmt<void>::Visitor
 {
-
     Object evaluate(Expr<Object>* expr);
+
     bool is_truthy(Object val);
     bool is_equal(const Object& left, const Object& right);
     void check_number_operand(Token opr, const Object& operand);
@@ -23,13 +23,15 @@ class Interpreter : public Expr<Object>::Visitor, public Stmt<void>::Visitor
 
     void execute(Stmt<void>* stmt);
     Object look_up_variable(Token, Expr<Object>*);
-
+    int get_distance(Expr<Object>*);
 
     Environment globals;
     Environment* environment {&globals};
 
     std::vector<std::unique_ptr<Environment>> envvec;
     std::unordered_map<Expr<Object>*, int> locals;
+
+
 
 public:
     Interpreter();
@@ -46,6 +48,7 @@ public:
     Object visit(Get<Object>* get);
     Object visit(Set<Object>* set);
     Object visit(This<Object>* thisexpr);;
+    Object visit(Super<Object>* superexpr);
 
     void visit(Expression<void>* expr);
     void visit(Print<void>* prt);

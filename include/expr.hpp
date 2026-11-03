@@ -42,6 +42,9 @@ struct Set;
 template<typename T>
 struct This;
 
+template <typename T>
+struct Super;
+
 template<typename T>
 struct Expr{
 
@@ -58,6 +61,7 @@ struct Expr{
         virtual T visit(Get<T>*) = 0;
         virtual T visit(Set<T>*) = 0;
         virtual T visit(This<T>*) = 0;
+        virtual T visit(Super<T>*) = 0;
     };
 
     Expr() = default;
@@ -256,6 +260,23 @@ struct This : Expr<T>
     }
 };
 
+template <typename T>
+struct Super : Expr<T>
+{
+    Token keyword;
+    Token method;
+
+    Super() = default;
+    Super(Token _keyword, Token _method) :
+        keyword{_keyword},
+        method{_method}
+    {}
+
+    T accept(Expr<T>::Visitor* visitor){
+        return visitor->visit(this);
+    }
+};
+
 
 static std::unordered_map<std::type_index, std::string> expr_table {
     {std::type_index(typeid(Expr<Object>)),     "Expr<Object>"},
@@ -266,7 +287,10 @@ static std::unordered_map<std::type_index, std::string> expr_table {
     {std::type_index(typeid(Variable<Object>)), "Variable<Object>"},
     {std::type_index(typeid(Assign<Object>)),   "Assign<Object>"},
     {std::type_index(typeid(Call<Object>)),     "Call<Object>"},
-    {std::type_index(typeid(Get<Object>)),      "Get<Object>"}
+    {std::type_index(typeid(Get<Object>)),      "Get<Object>"},
+    {std::type_index(typeid(Set<Object>)),      "Set<Object>"},
+    {std::type_index(typeid(This<Object>)),     "This<Object>"},
+    {std::type_index(typeid(Super<Object>)),    "Super<Object>"},
 };
 
 

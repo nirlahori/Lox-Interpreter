@@ -8,6 +8,7 @@
 
 #include "lox.hpp"
 #include <iostream>
+#include <utility>
 
 Interpreter::Interpreter() = default;
 
@@ -63,7 +64,7 @@ Object Interpreter::visit(Call<Object> *call)
     }
     LoxCallable* function {callee.as_callable()};
     if(!function){
-        throw RuntimeError(call->paren, "Can only call functions and classes\n");
+        throw RuntimeError(call->paren, "Can only call functions and classes");
     }
     if(arguments.size() != function->arity()){
         throw RuntimeError(call->paren, "Expected " + std::to_string(function->arity()) + " arguments but got " + std::to_string(arguments.size()));
@@ -76,7 +77,6 @@ Object Interpreter::visit(Get<Object> *get)
     Object object {evaluate(get->object.get())};
     if(object.underlying_type() == "lox_instance"){
         LoxInstance* instance {object.as_lox_class_instance()};
-
         return instance->get(this, get->name);
     }
     throw RuntimeError(get->name, "Only instances have properties");
@@ -99,6 +99,18 @@ Object Interpreter::visit(Set<Object> *set)
 Object Interpreter::visit(This<Object> *thisexpr)
 {
     return look_up_variable(thisexpr->keyword, thisexpr);
+}
+
+Object Interpreter::visit(Super<Object> *superexpr)
+{
+    int distance {locals.at(superexpr)};
+    LoxClass* superclass {static_cast<LoxClass*>(environment->get_reference(distance, "super").as_callable())};
+    LoxInstance* object {environment->get_at(distance - 1, "this").as_lox_class_instance()};
+    if(superclass->contains_method(superexpr->method.get_lexeme())){
+        LoxFunction method {superclass->find_method(superexpr->method.get_lexeme())};
+        return method.bind(this, *object);
+    }
+    throw RuntimeError(superexpr->method, "Undefined property'" + superexpr->method.get_lexeme() + "'.");
 }
 
 void Interpreter::visit(Expression<void> *stmt)
@@ -162,7 +174,28 @@ void Interpreter::visit(Return<void> *ret)
 
 void Interpreter::visit(Class<void> *classstmt)
 {
+    Object* superptr {};
+    if(classstmt->superclass){
+        int distance {get_distance(classstmt->superclass.get())};
+        if(distance != -1){
+            superptr = &environment->get_reference(distance, classstmt->superclass->name.get_lexeme());
+        }
+        else{
+            superptr = &globals.get_reference(classstmt->superclass->name);
+        }
+        if(superptr && superptr->underlying_type() != "lox_class"){
+            throw RuntimeError(classstmt->superclass->name, "Superclass must be class");
+        }
+    }
+
     environment->define_name(classstmt->name.get_lexeme(), nullptr);
+
+    Environment* enclosing = environment;
+    if(superptr){
+        Environment* superclass_environment {create_environment(environment)};
+        superclass_environment->define_name("super", *superptr);
+        environment = superclass_environment;
+    }
 
     std::unordered_map<std::string, LoxFunction> methods;
     for(const std::unique_ptr<Function<void>>& method : classstmt->methods){
@@ -170,7 +203,10 @@ void Interpreter::visit(Class<void> *classstmt)
         methods.insert({method->name.get_lexeme(), function});
     }
 
-    LoxClass klass {classstmt->name.get_lexeme(), methods};
+    if(superptr){
+        environment = enclosing;
+    }
+    LoxClass klass {classstmt->name.get_lexeme(), superptr ? static_cast<LoxClass*>(superptr->as_callable()) : nullptr, methods};
     environment->assign(classstmt->name, klass);
 }
 
@@ -182,7 +218,6 @@ void Interpreter::interpret(std::vector<std::unique_ptr<Stmt<void>>> statements)
                 execute(stmt.get());
             }
         }
-
     } catch (RuntimeError& error) {
         Lox::runtime_error(error);
     }
@@ -195,8 +230,12 @@ Environment* Interpreter::get_global_environment()
 
 Object Interpreter::evaluate(Expr<Object> *expr)
 {
-    return expr->accept(this);
+    if(expr){
+        return expr->accept(this);
+    }
+    return nullptr;
 }
+
 
 bool Interpreter::is_truthy(Object val)
 {
@@ -226,14 +265,14 @@ bool Interpreter::is_equal(const Object &left, const Object &right)
 void Interpreter::check_number_operand(Token opr, const Object &operand)
 {
     if(operand.underlying_type() != "double"){
-        throw RuntimeError(opr, "Operand must be a number\n");
+        throw RuntimeError(opr, "Operand must be a number");
     }
 }
 
 void Interpreter::check_number_operand(Token opr, const Object &left, const Object &right)
 {
     if(left.underlying_type() != "double" || right.underlying_type() != "double"){
-        throw RuntimeError(opr, "Operands must be numbers\n");
+        throw RuntimeError(opr, "Operands must be numbers");
     }
 }
 
@@ -268,6 +307,16 @@ Object Interpreter::look_up_variable(Token name, Expr<Object>* expr)
         return globals.get(name);
     }
     return environment->get_at(distance, name.get_lexeme());
+}
+
+int Interpreter::get_distance(Expr<Object>* expr)
+{
+    try{
+        return locals.at(expr);
+    }
+    catch(...){
+        return -1;
+    }
 }
 
 void Interpreter::execute_block(const std::vector<std::unique_ptr<Stmt<void>>>& statements, Environment& env)
@@ -343,7 +392,7 @@ Object Interpreter::visit(Binary<Object>* bin)
                 return static_cast<std::string>(left) + static_cast<std::string>(right);
             }
             else{
-                throw RuntimeError(bin->opr, "Double or String expected\n");
+                throw RuntimeError(bin->opr, "Double or String expected");
             }
         case TokenType::BANG_EQUAL:
             return !is_equal(left, right);
